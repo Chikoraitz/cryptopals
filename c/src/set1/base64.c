@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../include/base64.h"
+#include "../../include/set1/base64.h"
 
 #define UPPER_BOUND 300
 #define BYTE_NIBBLES 2

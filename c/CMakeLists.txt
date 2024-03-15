@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(convertHex2Base64 VERSION 0.1.0)
+project(cryptopals VERSION 0.1.0)
 
 # Add source files
 add_subdirectory(src)
@@ -17,5 +17,5 @@ if(UNIT_TESTING)
   add_subdirectory(tests)
 endif()
 
-add_executable(convertHex2Base64 main.c)
-target_link_libraries(convertHex2Base64 PUBLIC base64_lib)
+add_executable(set1 main.c)
+target_link_libraries(set1 PUBLIC base64_lib)

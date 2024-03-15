@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <cmocka.h>
 
-#include "../include/base64.h"
+#include "../../include/set1/base64.h"
 
 
 void validate_hex_to_byte_conversion(void ** state) {
@@ -20,7 +20,7 @@ void validate_hex_to_byte_conversion(void ** state) {
 void validate_results(void ** state) {
   (void) state; // Unused
 
-  assert_string_equal(hex2base64("414243"),"QUJD"); 
+  assert_string_equal(hex2base64("414243"),"QUJD");  
   assert_string_equal(hex2base64("41424344"),"QUJDRA=="); 
   assert_string_equal(hex2base64("4546474849"),"RUZHSEk="); 
   assert_string_equal(hex2base64("4a4b4c4d4e4f"),"SktMTU5P");  
