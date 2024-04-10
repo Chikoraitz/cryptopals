@@ -4,10 +4,12 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "utils.h"
+
+
 #define BLOCK_SIZE  3
 #define BLOCK_STRING_SIZE BLOCK_SIZE + 1  // Null character
 
-typedef unsigned char byte;
 
 struct SEncodingIteration {
   byte buffer[BLOCK_STRING_SIZE];
