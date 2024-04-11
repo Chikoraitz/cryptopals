@@ -4,6 +4,9 @@
 
 #include "cmocka_api.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 
 void validate_hexchars2bytevalue_conversion(void ** state) {
   (void) state; // Unused
@@ -33,7 +36,12 @@ void validate_challenge1(void ** state) {
 void validate_challenge2(void ** state) {
   (void) state; // Unused
 
-  assert_string_equal(xor("1c0111001f010100061a024b53535009181c", "686974207468652062756c6c277320657965"), "746865206b696420646f6e277420706c6179");
+  Message test_a = xor("1c0111001f010100061a024b53535", "68697420746");
+  assert_int_equal(test_a.status, -1);
+  
+  Message test = xor("1c0111001f010100061a024b53535009181c", "686974207468652062756c6c277320657965");
+  assert_string_equal(test.content, "746865206b696420646f6e277420706c6179");
+  free(test.content);
 }
 
 

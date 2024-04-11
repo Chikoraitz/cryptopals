@@ -5,7 +5,7 @@
 
 #include "utils.h"
 
-byte * xor(byte [], byte []);
+Message xor(byte [], byte []);
 
 
 #endif
