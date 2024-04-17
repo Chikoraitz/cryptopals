@@ -23,7 +23,7 @@ fi
 
 if [[ "$@" =~ "--build" ]]; then
   echo -e "${YELLOW}Building all tests...${DEFAULT}\n"
-  cmake -S . -B build -DUNIT_TESTING=ON && cmake --build build
+  cmake -S . -B build -DUNIT_TESTING=ON -DCMAKE_BUILD_TYPE=Debug && cmake --build build
 fi
 
 if [[ "$@" =~ "--run" ]]; then

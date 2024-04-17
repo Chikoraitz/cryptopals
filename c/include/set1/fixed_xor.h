@@ -5,7 +5,11 @@
 
 #include "utils.h"
 
-Message xor(byte [], byte []);
+typedef struct SRawData{
+  byte * data;
+  int size;
+} raw_data;
 
+void xor(SymEncryptMessage *, raw_data, raw_data);
 
 #endif

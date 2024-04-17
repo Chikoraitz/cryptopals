@@ -5,37 +5,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 /*
- * Receives two equal-sized buffers and performs XOR operation
- * over the content of the two buffers. 
- * The function expects two strings and returns a string.
+ * Receives two buffers and performs XOR operation over
+ * the content of the two buffers.
+ * The function expects two raw_data data structures and 
+ * outputs the result into a SymEncryptMessage data type variable 
+ * Both data structures are defined in utils.h
 */
-Message xor(byte buffer1[], byte buffer2[]) {
-  Message m = { .status = -1 };
+void xor(SymEncryptMessage * msg, raw_data op1, raw_data op2) {
+  msg->algorithm = "XOR";
+  msg->status = Error;
 
-  // Check if buffers are of equal length
-  if(strlen(buffer1) != strlen(buffer2)){
-    m.content = "Buffers are not of equal size!";
-    return m;
+  const int cipher_size = (op1.size > op2.size) ? op1.size : op2.size; 
+  byte res[cipher_size];
+
+  for(int i = 0; i < cipher_size; i++) {
+    // Performs XOR operation over the operands
+    res[i] = op1.data[i % op1.size] ^ op2.data[i % op2.size];
   }
 
-  size_t buffer_size = strlen(buffer1) + 1;
-  m.content = (char *) malloc(buffer_size);
-  byte res, operand1, operand2;
-
-  for(int i = 0; i < buffer_size; i++) {
-    // Convert buffers to byte representation
-    operand1 = hex_char2num(buffer1[i]);
-    operand2 = hex_char2num(buffer2[i]);
-
-    // Performs XOR operation
-    res = operand1 ^ operand2;
-
-    // Converts the values back to hex string representation
-    m.content[i] = hex_num2char(res);
-  }
-
-  m.content[buffer_size - 1] = '\0';
-  m.status = 0;
-  return m;
+  export_raw_bytes(msg->data, res, cipher_size);
+  msg->status = Encrypted;
 }

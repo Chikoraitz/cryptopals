@@ -3,13 +3,14 @@
 list(APPEND HEADER_FILES 
       "${CMAKE_SOURCE_DIR}/include/set1/utils.h"
       "${CMAKE_SOURCE_DIR}/include/set1/base64.h"
-      "${CMAKE_SOURCE_DIR}/include/set1/fixed_xor.h")
+      "${CMAKE_SOURCE_DIR}/include/set1/fixed_xor.h"
+      "${CMAKE_SOURCE_DIR}/include/set1/single_byte_xor_cipher.h")
 
 list(APPEND SRC_FILES 
       "${CMAKE_CURRENT_SOURCE_DIR}/set1/utils.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/set1/base64.c"
-      "${CMAKE_CURRENT_SOURCE_DIR}/set1/fixed_xor.c")
-
+      "${CMAKE_CURRENT_SOURCE_DIR}/set1/fixed_xor.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/set1/single_byte_xor_cipher.c")
 
 #[[ Set 2 Challenges ]]
 #[[ Set 3 Challenges ]]

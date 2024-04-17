@@ -1,11 +1,9 @@
 #[[ == Smoke Test == ]]
 
-add_cmocka_test(
-    smoke_test
-    SOURCES smoke_test.c
-    COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS}
-    LINK_LIBRARIES "${CMOCKA_LIBRARIES}"
-)
+add_cmocka_test(smoke_test
+                SOURCES smoke_test.c
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS}
+                LINK_LIBRARIES "${CMOCKA_LIBRARIES}")
 
 add_cmocka_test_environment(smoke_test)
 

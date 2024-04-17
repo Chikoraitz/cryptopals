@@ -8,7 +8,7 @@
 
 
 #define BLOCK_SIZE  3
-#define BLOCK_STRING_SIZE BLOCK_SIZE + 1  // Null character
+#define BLOCK_STRING_SIZE BLOCK_SIZE + 1
 
 
 struct SEncodingIteration {
