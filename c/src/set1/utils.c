@@ -1,23 +1,16 @@
 #include "../../include/set1/utils.h"
 
 /**
- * Receives two characters and outputs their hex conversion
- * msd - Most Significant Digit
- * lsd - Least Significant Digit
-*/
-const byte convertHexChars2Byte(char msd_char, char lsd_char) {
-  byte msd, lsd;
-  
-  msd = hex_char2value(msd_char);
-  lsd = hex_char2value(lsd_char);
-
-  return (msd << 4) | lsd; 
-}
-
-
-/**
- * Converts the character representation of an hexadecimal
- * number to its binary value 
+ * hex_char2value() - Converts the hexadecimal character into its value
+ * @ch: Finite set of 16 characters that make up the hexadecimal representation 
+ *      of a byte nibble
+ * 
+ * Alphanumeric characters have different values from their ASCII representations.
+ * This function associates the hexadecimal character representation to its intrinsic 
+ * byte value. 
+ * 
+ * Return:
+ * @(byte): A value between 0 and 15. 
 */
 const byte hex_char2value(char ch) {
   switch(ch) {
@@ -49,8 +42,15 @@ const byte hex_char2value(char ch) {
 
 
 /**
- * Converts the binary value of an hexadecimal
- * number to its character representation 
+ * hex_value2char() - Converts the value into its associated hexadecimal character
+ * @b: A value betwwen 0 and 15.
+ * 
+ * Inverse conversion of hex_value2char(). 
+ * Alphanumeric characters have different values from their ASCII representations.
+ * This function associates its byte value to its hexadecimal character representation.
+ * 
+ * Return: 
+ * @(char): An hexadecimal character. 
 */
 const char hex_value2char(byte b) {
   switch(b) {
@@ -75,20 +75,23 @@ const char hex_value2char(byte b) {
 
 
 /**
- * Convert a string into an array of its associated bytes values. 
- * Stores the result into the provided structure.
- * Receives as arguments:  
- *  - Memory location of the byte array output
- *  - String of the binary data in its hexadecimal representation  
+ * import_raw_bytes() - Converts an hexadecimal string into its associated raw binary data array 
+ * @out_ptr:  Output byte buffer
+ * @in:       Input string
+ * 
+ * This function converts binary data in its hexadecimal string form,
+ * into an array of bytes with its associated raw value. Since each character
+ * represents a nibble, the resultant byte array will have half the size of 
+ * the input.   
 */
 void import_raw_bytes(byte out_ptr[], const char in[]) {
   int out_i = 0;
 
   for(int i = 0; i < strlen(in); i++) {
     // Most significant nibble
-    if(i % BYTE_NIBBLES == MSN) {
+    if(i % NIBBLE_BYTE == MSN) {
       out_ptr[out_i] = (hex_char2value(in[i]) & 0xf);
-      out_ptr[out_i] <<= BIT_NIBBLES; 
+      out_ptr[out_i] <<= BIT_NIBBLE; 
     }
     // Least significant nibble
     else {
@@ -100,27 +103,29 @@ void import_raw_bytes(byte out_ptr[], const char in[]) {
 
 
 /**
- * Convert an array of bytes values into its associated hex characters.
- * Stores the result into the provided structure.
- * Receives as arguments:
- * - Memory location of the string output
- * - Raw binary data  
+ * export_raw_bytes() - Converts a raw binary data array into its associated hexadecimal string
+ * @out:  Output string
+ * @in:   Input byte buffer
+ * 
+ * This function iterates over all elements of a raw byte buffer and converts
+ * them into their associated pair of hexadecimal characters. The resultant string
+ * will have twice the size of the byte array size.
 */
-void export_raw_bytes(char out_ptr[], const byte in[], const int buffer_size) {
+void export_raw_bytes(char * out, const Data in) {
   int in_i = 0;
-  int string_size = buffer_size * BYTE_NIBBLES;
+  int string_size = in.size * NIBBLE_BYTE;
 
   for(int i = 0; i < string_size; i++) {
     // Most significant nibble
-    if(i % BYTE_NIBBLES == MSN) {
-      out_ptr[i] = hex_value2char(in[in_i] >> BIT_NIBBLES);
+    if(i % NIBBLE_BYTE == MSN) {
+      out[i] = hex_value2char(in.content[in_i] >> BIT_NIBBLE);
     }
     // Least significant nibble
     else {
-      out_ptr[i] = hex_value2char(in[in_i] & 0xf);
+      out[i] = hex_value2char(in.content[in_i] & 0xf);
       in_i++;
     }
   }
 
-  out_ptr[string_size] = '\0';
+  out[string_size] = '\0';
 }

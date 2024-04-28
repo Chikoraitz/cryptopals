@@ -2,14 +2,12 @@
 #define __FIXEDXOR_HEADER__
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "utils.h"
 
-typedef struct SRawData{
-  byte * data;
-  int size;
-} raw_data;
-
-void xor(SymEncryptMessage *, raw_data, raw_data);
+void xor(Data *, const Data, const Data);
 
 #endif

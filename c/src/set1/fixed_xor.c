@@ -1,30 +1,20 @@
-#include <string.h>
-
 #include "../../include/set1/fixed_xor.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-
 /*
- * Receives two buffers and performs XOR operation over
- * the content of the two buffers.
- * The function expects two raw_data data structures and 
- * outputs the result into a SymEncryptMessage data type variable 
- * Both data structures are defined in utils.h
+ * xor() - Performs XOR operation
+ * @msg:  Memory address of the XOR result
+ * @op1:  XOR operand
+ * @op2:  XOR operand
+ * 
+ * Iterates over all byte elements of each operand arguments and 
+ * performs their XOR operation. The XOR result content will have 
+ * the size of the largest operand supplied, and cyclically repeats 
+ * the smaller operand throughout the operation.
 */
-void xor(SymEncryptMessage * msg, raw_data op1, raw_data op2) {
-  msg->algorithm = "XOR";
-  msg->status = Error;
-
+void xor(Data * msg, const Data op1, const Data op2) {
   const int cipher_size = (op1.size > op2.size) ? op1.size : op2.size; 
-  byte res[cipher_size];
 
   for(int i = 0; i < cipher_size; i++) {
-    // Performs XOR operation over the operands
-    res[i] = op1.data[i % op1.size] ^ op2.data[i % op2.size];
+    msg->content[i] = op1.content[i % op1.size] ^ op2.content[i % op2.size];
   }
-
-  export_raw_bytes(msg->data, res, cipher_size);
-  msg->status = Encrypted;
 }
