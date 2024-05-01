@@ -103,13 +103,13 @@ void validate_challenge2(void ** state) {
 */
 void validate_challenge3(void ** state) {
   (void) state; // Unused
-
-  assert_double_equal(en_score("aaaaAAAA"), 10.77, 0.1);
-  assert_double_equal(en_score("abab ABAB"), 11.08, 0.1);
-  assert_double_equal(en_score("aBe abE ABe AbE"), 4.31, 0.1);
-  assert_double_equal(en_score("Timed voice share led his widen noisy young"), 0.38, 0.1);
-  assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large."), 0.29, 0.1);
-
+  
+  assert_double_equal(en_score("aaaaAAAA", 8), 86.155, 0.1);
+  assert_double_equal(en_score("abab ABAB", 9), 112.06, 0.1);
+  assert_double_equal(en_score("aBe abE ABe AbE", 15), 79.99, 0.1);
+  assert_double_equal(en_score("Timed voice share led his widen noisy young", 43), 18.30, 0.1);
+  assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large.", 127), 39.33, 0.1);
+  
   const char * encrypt_msg_string = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
   Data encrypt_msg = {
@@ -118,7 +118,7 @@ void validate_challenge3(void ** state) {
   };
 
   LanguageScore best = {
-    .score = 100.0,
+    .score = 100.0, // Arbitrarily large value
     .text.content = (byte *) malloc(sizeof(byte *) * encrypt_msg.size),
     .text.size = encrypt_msg.size,
     .key = (byte *) malloc(sizeof(byte *) * 1)
@@ -136,12 +136,42 @@ void validate_challenge3(void ** state) {
 }
 
 
+/**
+ * Challenge 4:
+ * Detect single-character XOR ciphers
+*/
+void validate_challenge4(void ** state) {
+  (void) state;
+
+  // The ciphers all have size 30 bytes
+  char cipher[60];
+  char msg[60];
+
+  FILE * fp; 
+  const char * filename = "../../assets/set1/4.txt";
+
+  if((fp = fopen(filename, "r")) == NULL) {
+    printf("Can't open file: %s\n", filename);
+    assert_true(0x0);
+  }
+
+  const int error = detect_single_byte_key_xor(fp, cipher, msg);
+
+  fclose(fp);
+
+  assert_int_equal(error, 0x0);
+  assert_string_equal(cipher, "7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f");
+  assert_string_equal(msg, "Now that the party is jumping\n");
+}
+
+
 int main(void) {
   const struct CMUnitTest tests[] = {
     cmocka_unit_test(validate_raw_bytes),
     cmocka_unit_test(validate_challenge1),
     cmocka_unit_test(validate_challenge2),
-    cmocka_unit_test(validate_challenge3)
+    cmocka_unit_test(validate_challenge3),
+    cmocka_unit_test(validate_challenge4)
   };
 
   return cmocka_run_group_tests(tests, NULL, NULL);

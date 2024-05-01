@@ -1,6 +1,7 @@
 #ifndef __XOR_DECRYPT__
 #define __XOR_DECRYPT__
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "fixed_xor.h"
@@ -52,7 +53,8 @@ typedef struct SPlaintextScore {
 
 
 void xor_decrypt(LanguageScore *, const Data, const int);
-double en_score(const char *);
+int detect_single_byte_key_xor(FILE *, char *, char *);
+double en_score(const char *, const int);
 
 static byte generate_next_key_try(byte *, const int);
 static void score_assessment(LanguageScore *, LanguageScore *, const int, const int);
