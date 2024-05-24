@@ -165,13 +165,61 @@ void validate_challenge4(void ** state) {
 }
 
 
+/**
+ * Challenge 5:
+ * Implementation of Repeating-key XOR
+*/
+void validate_challenge5(void ** state) {
+  (void) state;
+
+  const char * key = "ICE";
+  const int key_size = strlen(key);
+
+  const char * msg = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+  const int msg_size = strlen(msg);
+
+  const char * result = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"; 
+
+  char msg_encrypted_hex[msg_size * NIBBLE_BYTE];
+
+  Data raw_text = {
+    .size = msg_size,
+    .content = (byte *) malloc(sizeof(byte) * msg_size)
+  };
+
+  Data raw_key = {
+    .size = key_size,
+    .content = (byte *) malloc(sizeof(byte) * msg_size)
+  };
+
+  Data msg_encrypted = {
+    .size = raw_text.size,
+    .content = (byte *) malloc(sizeof(char) * raw_text.size)
+  };
+
+  strncpy(raw_text.content, msg, raw_text.size);
+  strncpy(raw_key.content, key, raw_key.size);
+
+  xor(&msg_encrypted, raw_text, raw_key);
+
+  export_raw_bytes(msg_encrypted_hex, msg_encrypted);
+
+  assert_int_equal(strlen(msg_encrypted_hex), strlen(result));
+  assert_string_equal(msg_encrypted_hex, result);
+
+  free(raw_text.content);
+  free(raw_key.content);
+}
+
+
 int main(void) {
   const struct CMUnitTest tests[] = {
     cmocka_unit_test(validate_raw_bytes),
     cmocka_unit_test(validate_challenge1),
     cmocka_unit_test(validate_challenge2),
     cmocka_unit_test(validate_challenge3),
-    cmocka_unit_test(validate_challenge4)
+    cmocka_unit_test(validate_challenge4),
+    cmocka_unit_test(validate_challenge5),
   };
 
   return cmocka_run_group_tests(tests, NULL, NULL);
