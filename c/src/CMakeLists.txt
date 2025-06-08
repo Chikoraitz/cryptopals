@@ -1,14 +1,23 @@
+#[[ Utility Functions ]]
+
+list(APPEND HEADER_FILES
+      "${CMAKE_SOURCE_DIR}/include/utils/data_conversion.h"
+      "${CMAKE_SOURCE_DIR}/include/utils/base64.h")
+
+list(APPEND SRC_FILES
+      "${CMAKE_CURRENT_SOURCE_DIR}/utils/data_conversion.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/utils/base64.c")
+
+
 #[[ Set 1 Challenges ]]
 
 list(APPEND HEADER_FILES 
-      "${CMAKE_SOURCE_DIR}/include/set1/utils.h"
       "${CMAKE_SOURCE_DIR}/include/set1/base64.h"
       "${CMAKE_SOURCE_DIR}/include/set1/fixed_xor.h"
       "${CMAKE_SOURCE_DIR}/include/set1/single_byte_xor_cipher.h"
       "${CMAKE_SOURCE_DIR}/include/set1/break_repeating_key_xor.h")
 
 list(APPEND SRC_FILES 
-      "${CMAKE_CURRENT_SOURCE_DIR}/set1/utils.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/set1/base64.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/set1/fixed_xor.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/set1/single_byte_xor_cipher.c"
@@ -25,4 +34,5 @@ list(APPEND SRC_FILES
 
 
 add_library(cryptopals_lib ${SRC_FILES} ${HEADER_FILES})
+target_include_directories(cryptopals_lib PRIVATE "${CMAKE_SOURCE_DIR}/include/utils")
 target_include_directories(cryptopals_lib PRIVATE "${CMAKE_SOURCE_DIR}/include/set1")

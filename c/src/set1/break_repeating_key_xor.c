@@ -1,6 +1,5 @@
 #include "../../include/set1/break_repeating_key_xor.h"
 
-
 /**
  * hamming_distance() - Calculates the bit Hamming distance between two strings
  * @string1:  Comparison operand
@@ -56,7 +55,7 @@ static int hamming_distance(const char * string1, const char * string2, const in
  * Return:
  * @(int): Estimated size of XOR key
 */
-int guess_xor_keysize(const FILE * fp) {
+int guess_xor_keysize(const Data * data) {
   // The base64-encoded message is compose by 30-character length rows,
   // separated by a newline character
   char buffer[30];

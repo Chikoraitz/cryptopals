@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../utils/data_conversion.h"
 #include "fixed_xor.h"
-#include "utils.h"
 
 /**
  * define LSB - Array index of the least significant byte.

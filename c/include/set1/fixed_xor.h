@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils.h"
+#include "../utils/data_conversion.h"
 
 void xor(Data *, const Data *, const Data *);
 

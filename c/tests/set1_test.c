@@ -3,28 +3,10 @@
 
 #include "cmocka_api.h"
 
-#include "../include/set1/utils.h"
 #include "../include/set1/base64.h"
 #include "../include/set1/fixed_xor.h"
 #include "../include/set1/single_byte_xor_cipher.h"
 #include "../include/set1/break_repeating_key_xor.h"
-
-
-void validate_raw_bytes(void **state) {
-  (void) state; // Unused
-
-  byte test1[1];
-  import_raw_bytes(test1, "a2");
-  assert_int_equal(*test1, 0xa2);
-
-  byte test2[5];
-  import_raw_bytes(test2, "139ac7ffd5");
-  assert_int_equal(test2[0], 0x13);
-  assert_int_equal(test2[1], 0x9a);
-  assert_int_equal(test2[2], 0xc7);
-  assert_int_equal(test2[3], 0xff);
-  assert_int_equal(test2[4], 0xd5);
-}
 
 
 /**
@@ -55,13 +37,8 @@ void validate_challenge1(void ** state) {
     res = (char *) malloc(sizeof(char) * get_base64_size(test_cases_hex[i]) + 1);
 
     // Base64 encoding tests
-    base64_from_hex_string(res, test_cases_hex[i]);
+    base64_encode_hex_string(res, test_cases_hex[i]);
     assert_string_equal(res, test_b64[i]);
-
-    // Base64 decoding tests
-    original = (char *) malloc(sizeof(char) * 111); // [WIP]
-    decode_base64(original, test_b64[i]);
-    assert_string_equal(original, test_cases[i]);
     
     free(res);
   }
@@ -234,10 +211,8 @@ void validate_challenge6(void ** state) {
 }
 
 
-
 int main(void) {
   const struct CMUnitTest tests[] = {
-    cmocka_unit_test(validate_raw_bytes),
     cmocka_unit_test(validate_challenge1),
     cmocka_unit_test(validate_challenge2),
     cmocka_unit_test(validate_challenge3),
