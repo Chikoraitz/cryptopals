@@ -111,18 +111,18 @@ void import_raw_bytes(byte out_ptr[], const char in[]) {
  * them into their associated pair of hexadecimal characters. The resultant string
  * will have twice the size of the byte array size.
 */
-void export_raw_bytes(char * out, const Data in) {
+void export_raw_bytes(char * out, const Data * in) {
   int in_i = 0;
-  int string_size = in.size * NIBBLE_BYTE;
+  int string_size = in->size * NIBBLE_BYTE;
 
   for(int i = 0; i < string_size; i++) {
     // Most significant nibble
     if(i % NIBBLE_BYTE == MSN) {
-      out[i] = hex_value2char(in.content[in_i] >> BIT_NIBBLE);
+      out[i] = hex_value2char(in->payload[in_i] >> BIT_NIBBLE);
     }
     // Least significant nibble
     else {
-      out[i] = hex_value2char(in.content[in_i] & 0xf);
+      out[i] = hex_value2char(in->payload[in_i] & 0xf);
       in_i++;
     }
   }

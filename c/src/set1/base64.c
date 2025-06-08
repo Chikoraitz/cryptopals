@@ -31,14 +31,12 @@ const int get_base64_size(const char * hex_string) {
  * before proceeding with its base64 encoding.
 */
 void base64_from_hex_string(char * res, const char * hex_string) {
-  Data raw_data;
-  raw_data.size = strlen(hex_string) / NIBBLE_BYTE;
-  raw_data.content = (byte *) malloc(sizeof(byte) * raw_data.size);
+  Data * _d = allocate_bytes(strlen(hex_string) / NIBBLE_BYTE);
 
-  import_raw_bytes(raw_data.content, hex_string);
-  base64_from_raw(res, raw_data);
+  import_raw_bytes(_d->payload, hex_string);
+  base64_from_raw(res, _d);
 
-  free(raw_data.content);
+  deallocate(_d);
 }
 
 
@@ -51,7 +49,7 @@ void base64_from_hex_string(char * res, const char * hex_string) {
  * in blocks of 3 and extrapolates the data into a block for 4 elements according
  * to the base46 encoding rules. 
 */
-void base64_from_raw(char * res, const Data raw_data) {
+void base64_from_raw(char * res, const Data * data) {
 
   byte b_block[BINARY_BLOCK_BUFFER_SIZE];
   char b64_block[BASE64_BLOCK_BUFFER_SIZE];
@@ -59,9 +57,9 @@ void base64_from_raw(char * res, const Data raw_data) {
   int b_block_i; 
   int pos = 0;
 
-  for(int i=0; i < raw_data.size; i++) {
+  for(int i=0; i < data->size; i++) {
     b_block_i = i % BINARY_BLOCK_BUFFER_SIZE;
-    b_block[b_block_i] = raw_data.content[i];
+    b_block[b_block_i] = data->payload[i];
 
     // Encode to base64 characters when binary buffer block is full
     if(b_block_i == BINARY_BLOCK_BUFFER_SIZE - 1) { 
@@ -135,4 +133,12 @@ static void block_encode(char * encoded_block, const byte * b_block) {
     
     encoded_block[i] = data[i] == (byte) ~0 ? '=' : base64_lookup_chars[data[i]];
   }
+}
+
+
+/**
+ * 
+*/
+void decode_base64(char * , const char * base64_s) {
+
 }

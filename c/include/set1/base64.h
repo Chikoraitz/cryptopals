@@ -25,7 +25,8 @@
 const int get_base64_size(const char *);
 
 void base64_from_hex_string(char *, const char *);
-void base64_from_raw(char *, const Data);
+void base64_from_raw(char *, const Data *);
+void decode_base64(char *, const char *);
 
 static int convert(char *, byte *, char *, int);
 static void block_encode(char *, const byte *);

@@ -1,5 +1,5 @@
-#ifndef __XOR_DECRYPT__
-#define __XOR_DECRYPT__
+#ifndef __SINGLE_XOR_DECRYPT__
+#define __SINGLE_XOR_DECRYPT__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,12 +47,12 @@
 */
 typedef struct SPlaintextScore {
   double score;
-  Data text;
+  Data * text;
   byte * key;
 } LanguageScore;
 
 
-void xor_decrypt(LanguageScore *, const Data, const int);
+void single_xor_decrypt(LanguageScore *, const Data *);
 int detect_single_byte_key_xor(FILE *, char *, char *);
 double en_score(const char *, const int);
 

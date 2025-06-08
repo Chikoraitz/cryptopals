@@ -11,10 +11,10 @@
  * the size of the largest operand supplied, and cyclically repeats 
  * the smaller operand throughout the operation.
 */
-void xor(Data * msg, const Data op1, const Data op2) {
-  const int cipher_size = (op1.size > op2.size) ? op1.size : op2.size; 
+void xor(Data * msg, const Data * op1, const Data * op2) {
+  const int cipher_size = (op1->size > op2->size) ? op1->size : op2->size; 
 
   for(int i = 0; i < cipher_size; i++) {
-    msg->content[i] = op1.content[i % op1.size] ^ op2.content[i % op2.size];
+    msg->payload[i] = op1->payload[i % op1->size] ^ op2->payload[i % op2->size];
   }
 }

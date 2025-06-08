@@ -1,5 +1,5 @@
-#ifndef __FIXEDXOR_HEADER__
-#define __FIXEDXOR_HEADER__
+#ifndef __FIXED_XOR_HEADER__
+#define __FIXED_XOR_HEADER__
 
 #include <stdint.h>
 #include <stdio.h>
@@ -8,6 +8,6 @@
 
 #include "utils.h"
 
-void xor(Data *, const Data, const Data);
+void xor(Data *, const Data *, const Data *);
 
 #endif

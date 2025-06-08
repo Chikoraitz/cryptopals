@@ -32,46 +32,40 @@ const double freq_expected[] = {
 
 
 /**
- * xor_decrypt() - Brute-force of the XOR-encrypted message.
+ * single_xor_decrypt() - Brute-force of the XOR-encrypted message.
  * @msg:          Decrypted message content
  * @encrypt_msg:  XOR-encrypted message
- * @key_size:     Key size subject to brute force
  * 
  * This function brute-forces the XOR key based on the key size provided.
  * The key size will determine the complete set of possible XOR keys used 
  * to encrypt the message.
 */
-void xor_decrypt(LanguageScore * msg, const Data encrypt_msg, const int key_size) {
+void single_xor_decrypt(LanguageScore * msg, const Data * encrypt_msg) {
+  const int key_size = sizeof(byte);
   byte is_new_key;
 
   LanguageScore try = {
     .score = 100.0,
-    .text.content = (byte *) malloc(sizeof(byte *) * msg->text.size),
-    .text.size = msg->text.size,
-    .key = (byte *) malloc(sizeof(byte *) * key_size)
+    .text = allocate_bytes(msg->text->size),
+    .key = (byte *) malloc(sizeof(byte))
   };
 
-  Data xor_key = {
-    .size = key_size,
-    .content = (byte *) malloc(sizeof(byte) * xor_key.size)
-  };
-
-  memset(xor_key.content, 0, key_size); // Initial key: 0x00
+  Data * xor_key = allocate_bytes(sizeof(byte));
 
   do {
-    xor(&try.text, encrypt_msg, xor_key);
+    xor(try.text, encrypt_msg, xor_key);
 
     // Get the plaintext message and evaluate its language score
-    memcpy(try.key, xor_key.content, key_size);
-    score_assessment(msg, &try, try.text.size, key_size);
+    memcpy(try.key, xor_key->payload, key_size);
+    score_assessment(msg, &try, try.text->size, key_size);
 
     // Checks if the 0x00 key is generated again and exits the loop
-    is_new_key = generate_next_key_try(xor_key.content, key_size);
+    is_new_key = generate_next_key_try(xor_key->payload, key_size);
 
   } while(is_new_key);
 
-  free(xor_key.content);
-  free(try.text.content);
+  deallocate(try.text);
+  deallocate(xor_key);
   free(try.key);
 }
 
@@ -120,12 +114,12 @@ static byte generate_next_key_try(byte * buffer, const int size) {
  * sentence. The closest the score is to 0, the closest it is from the expected 
  * character frequency, the most liekly it is to be an English sentence.
 */
-static void score_assessment(LanguageScore * best, LanguageScore * try, const int text_size, const int key_size) {  
-  try->score = en_score(try->text.content, text_size);
+static void score_assessment(LanguageScore * best, LanguageScore * try, const int text_size, const int key_size) {
+  try->score = en_score(try->text->payload, text_size);
 
   if(try->score < best->score) {
     best->score = try->score;
-    memcpy(best->text.content, try->text.content, text_size);
+    memcpy(best->text->payload, try->text->payload, text_size);
     memcpy(best->key, try->key, key_size);
   }
 }
@@ -201,52 +195,47 @@ double en_score(const char * plaintext_msg, const int text_len) {
  * Return:
  * @(int):      Status code
 */
-int detect_single_byte_key_xor(FILE * fp, char * cipher, char * msg) {  
-  // Memory allocation for the encrypted message byte raw handling
-  Data buffer = {
-    .size = 30, // It assumes that all ciphers have size 30 bytes
-    .content = (byte *) malloc(sizeof(byte) * buffer.size)
-  };
-  
-  const int cstr_size = buffer.size * NIBBLE_BYTE; 
+int detect_single_byte_key_xor(FILE * fp, char * cipher, char * msg) {
+  // All ciphers present in the text file have 30 bytes and are separated by a newline character
+  Data * buffer = allocate_bytes(30);    
+  const int cstr_size = buffer->size * NIBBLE_BYTE; 
   char fstr[cstr_size + 1];
 
   LanguageScore cipher_best = {
     .score = 100.0, // Arbitrarily large value
-    .text.content = (byte *) malloc(sizeof(byte *) * buffer.size),
-    .text.size = buffer.size,
-    .key = (byte *) malloc(sizeof(byte *) * 1)
+    .text = allocate_bytes(buffer->size),
+    .key = (byte *) malloc(sizeof(byte *))
   };
 
   LanguageScore file_best = {
     .score = 100.0, // Arbitrarily large value
-    .text.content = (byte *) malloc(sizeof(byte *) * buffer.size),
-    .text.size = buffer.size,
-    .key = (byte *) malloc(sizeof(byte *) * 1)
+    .text = allocate_bytes(buffer->size),
+    .key = (byte *) malloc(sizeof(byte *))
   };
 
   while(fgets(fstr, cstr_size + 1, fp) != NULL) {
     // Remove new line characters
     fstr[strcspn(fstr, "\n")] = '\0';
-    import_raw_bytes(buffer.content, fstr);
+    import_raw_bytes(buffer->payload, fstr);
 
     cipher_best.score = 100.0; // Arbitrarily large value
-    xor_decrypt(&cipher_best, buffer, 1);
+    single_xor_decrypt(&cipher_best, buffer);
     
     if(cipher_best.score < file_best.score) {
       file_best.score = cipher_best.score;
-      memcpy(file_best.text.content, cipher_best.text.content, buffer.size);
+      memcpy(file_best.text->payload, cipher_best.text->payload, buffer->size);
       memcpy(file_best.key, cipher_best.key, 1);
       strncpy(cipher, fstr, cstr_size + 1);
     }
   }
 
-  strncpy(msg, file_best.text.content, buffer.size);
+  strncpy(msg, file_best.text->payload, buffer->size);
 
-  free(buffer.content);
-  free(cipher_best.text.content);
+
+  deallocate(buffer);
+  deallocate(cipher_best.text);
+  deallocate(file_best.text);
   free(cipher_best.key);
-  free(file_best.text.content);
   free(file_best.key);
 
   return 0;
