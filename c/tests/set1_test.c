@@ -54,35 +54,26 @@ void validate_challenge1(void ** state) {
 */
 void validate_challenge2(void ** state) {
   (void) state; // Unused
+  // Challenge variables
   enum { BUFFER_SIZE = 50, BYTE_OPERAND_SIZE = 18 };
-
   const char xor_hexstr1[] = "1c0111001f010100061a024b53535009181c";
   const char xor_hexstr2[] = "686974207468652062756c6c277320657965";
+  
+  // Buffers
   char hexstr_result[BUFFER_SIZE];
-
   byte xor_bytes_op1[BUFFER_SIZE] = {0x0};
   byte xor_bytes_op2[BUFFER_SIZE] = {0x0};
   byte xor_bytes_result[BUFFER_SIZE] = {0x0};
 
-  ByteData xor_op1 = {
-    .size = BUFFER_SIZE,
-    .content = xor_bytes_op1
-  };
-
-  ByteData xor_op2  = {
-    .size = BUFFER_SIZE,
-    .content = xor_bytes_op2
-  };
-
-  ByteData xor_result = {
-    .size = BUFFER_SIZE,
-    .content = xor_bytes_result
-  };
-
+  // Algorithm
   hexstr_to_bytes(xor_hexstr1, xor_bytes_op1);
   hexstr_to_bytes(xor_hexstr2, xor_bytes_op2);
 
-  xor(xor_op1, xor_op2, &xor_result);
+  xor(
+    (ByteData) { .size = BUFFER_SIZE, .content = xor_bytes_op1 },
+    (ByteData) { .size = BUFFER_SIZE, .content = xor_bytes_op2 },
+    &(ByteData) { .size = BUFFER_SIZE, .content = xor_bytes_result }
+  );
 
   bytes_to_hexstr(xor_bytes_result, hexstr_result, BYTE_OPERAND_SIZE);
   assert_string_equal(hexstr_result, "746865206b696420646f6e277420706c6179");
@@ -202,39 +193,39 @@ void validate_challenge4(void ** state) {
 }
 
 
-// /**
-//  * Challenge 5:
-//  * Implementation of Repeating-key XOR
-// */
-// void validate_challenge5(void ** state) {
-//   (void) state;
+/**
+ * Challenge 5:
+ * Implementation of Repeating-key XOR
+*/
+void validate_challenge5(void ** state) {
+  (void) state;
+  // Challenge variables
+  enum { BUFFER_SIZE = 100 };
+  const char * key = "ICE";
+  const uint8_t key_size = strlen(key);
+  const char * plaintext = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+  const uint8_t plaintext_size = strlen(plaintext);
+  const char * result_hexstr = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"; 
+  
+  // Buffer
+  char cipher_hexstr[plaintext_size * NIBBLE_BYTE];
+  byte plaintext_buffer[BUFFER_SIZE] = {0x0};
+  byte key_buffer[BUFFER_SIZE] = {0x0};
+  byte cipher_bytes_buffer[BUFFER_SIZE] = {0x0};
 
-//   const char * key = "ICE";
-//   const int key_size = strlen(key);
+  // Algorithm  
+  strncpy(plaintext_buffer, plaintext, plaintext_size);
+  strncpy(key_buffer, key, key_size);
 
-//   const char * msg = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
-//   const int msg_size = strlen(msg);
+  xor(
+    (ByteData){ .size = plaintext_size, .content = plaintext_buffer },
+    (ByteData){ .size = key_size, .content = key_buffer },
+    &(ByteData){ .size = plaintext_size, .content = cipher_bytes_buffer }
+  );
 
-//   const char * result = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"; 
-//   char msg_encrypted_hex[msg_size * NIBBLE_BYTE];
-
-//   Data * byte_text = allocate_bytes(msg_size);
-//   Data * byte_key = allocate_bytes(key_size);
-//   Data * msg_encrypted = allocate_bytes(msg_size);
-
-//   strncpy(byte_text->content, msg, byte_text->size);
-//   strncpy(byte_key->content, key, byte_key->size);
-
-//   xor(msg_encrypted, byte_text, byte_key);
-//   bytes_to_hexstr(msg_encrypted_hex, msg_encrypted);
-
-//   assert_int_equal(strlen(msg_encrypted_hex), strlen(result));
-//   assert_string_equal(msg_encrypted_hex, result);
-
-//   deallocate(byte_text);
-//   deallocate(byte_key);
-//   deallocate(msg_encrypted);
-// }
+  bytes_to_hexstr(cipher_bytes_buffer, cipher_hexstr, plaintext_size);
+  assert_string_equal(cipher_hexstr, result_hexstr);
+}
 
 
 // /**
@@ -278,7 +269,7 @@ int main(void) {
     cmocka_unit_test(validate_challenge2),
     cmocka_unit_test(validate_challenge3),
     cmocka_unit_test(validate_challenge4),
-    // cmocka_unit_test(validate_challenge5),
+    cmocka_unit_test(validate_challenge5),
     // cmocka_unit_test(validate_challenge6)
   };
 
