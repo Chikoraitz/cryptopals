@@ -1,12 +1,10 @@
 #[[ Utility Functions ]]
 
 list(APPEND HEADER_FILES
-      "${CMAKE_SOURCE_DIR}/include/utils/data_conversion.h"
-      "${CMAKE_SOURCE_DIR}/include/utils/base64.h")
+      "${CMAKE_SOURCE_DIR}/include/utils/data_conversion.h")
 
 list(APPEND SRC_FILES
-      "${CMAKE_CURRENT_SOURCE_DIR}/utils/data_conversion.c"
-      "${CMAKE_CURRENT_SOURCE_DIR}/utils/base64.c")
+      "${CMAKE_CURRENT_SOURCE_DIR}/utils/data_conversion.c")
 
 
 #[[ Set 1 Challenges ]]

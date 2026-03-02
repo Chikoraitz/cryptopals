@@ -5,15 +5,15 @@
 #include <stdlib.h>
 
 #include "../utils/data_conversion.h"
-#include "../utils/base64.h"
+
+#define BINARY_BLOCK_SIZE 3
+#define BASE64_BLOCK_SIZE 4
+
 
 const int get_base64_size(const char *);
+void bytes_to_base64(const byte *, char *);
 
-void base64_encode_hex_string(char *, const char *);
-void base64_decode_to_hex_string(char *, const char *);
-
-void base64_encode_raw(char *, const Data *);
-void base64_decode_raw(Data *, const char *);
-
+extern const char base64_lookup_chars[];
+extern const char base64_padding;
 
 #endif

@@ -12,7 +12,7 @@
  * Return:
  * @(byte): A value between 0 and 15. 
 */
-const byte hex_char2value(char ch) {
+static inline const byte hex_char2value(char ch) {
   switch(ch) {
     case '0':
     case '1':
@@ -52,7 +52,7 @@ const byte hex_char2value(char ch) {
  * Return: 
  * @(char): An hexadecimal character. 
 */
-const char hex_value2char(byte b) {
+static inline const char hex_value2char(byte b) {
   switch(b) {
     case 0:   return '0';
     case 1:   return '1';
@@ -75,35 +75,38 @@ const char hex_value2char(byte b) {
 
 
 /**
- * import_raw_bytes() - Converts an hexadecimal string into its associated raw binary data array 
+ * hexstr_to_bytes() - Converts an hexadecimal string into its associated raw binary data array 
  * @out_ptr:  Output byte buffer
  * @in:       Input string
- * 
+ *  
+ * Assumes that the output buffer is always larger than the input.
  * This function converts binary data in its hexadecimal string form,
  * into an array of bytes with its associated raw value. Since each character
  * represents a nibble, the resultant byte array will have half the size of 
  * the input.   
 */
-void import_raw_bytes(byte out_ptr[], const char in[]) {
+void hexstr_to_bytes(const char in[], byte out[]) {
   int out_i = 0;
 
-  for(int i = 0; i < strlen(in); i++) {
+  for(int i=0; i<strlen(in); i++) {    
     // Most significant nibble
     if(i % NIBBLE_BYTE == MSN) {
-      out_ptr[out_i] = (hex_char2value(in[i]) & 0xf);
-      out_ptr[out_i] <<= BIT_NIBBLE; 
+      out[out_i] = (hex_char2value(in[i]) & 0xf);
+      out[out_i] <<= BIT_NIBBLE; 
     }
     // Least significant nibble
     else {
-      out_ptr[out_i] |= (hex_char2value(in[i]) & 0xf);
+      out[out_i] |= (hex_char2value(in[i]) & 0xf);
       out_i++;
     }
   }
+
+  for(int i=out_i; i<strlen(out); i++) out[out_i] = 0x0;
 }
 
 
 /**
- * export_raw_bytes() - Converts a raw binary data array into its associated hexadecimal string
+ * bytes_to_hexstr() - Converts a raw binary data array into its associated hexadecimal string
  * @out:  Output string
  * @in:   Input byte buffer
  * 
@@ -111,7 +114,7 @@ void import_raw_bytes(byte out_ptr[], const char in[]) {
  * them into their associated pair of hexadecimal characters. The resultant string
  * will have twice the size of the byte array size.
 */
-void export_raw_bytes(char * out, const Data * in) {
+void bytes_to_hexstr(const Data * in, char * out) {
   int in_i = 0;
   int string_size = in->size * NIBBLE_BYTE;
 

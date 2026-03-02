@@ -64,11 +64,9 @@ typedef struct SData {
   byte payload[];
 } Data;
 
-const byte hex_char2value(const char);
-const char hex_value2char(const byte);
 
-void import_raw_bytes(byte *, const char *);
-void export_raw_bytes(char *, const Data *);
+void hexstr_to_bytes(const char *, byte *);
+void bytes_to_hexstr(const Data *, char *);
 
 
 /**

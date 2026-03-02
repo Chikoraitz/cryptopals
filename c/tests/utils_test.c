@@ -5,15 +5,16 @@
 
 #include "../include/utils/data_conversion.h"
 
-void validate_raw_bytes(void **state) {
+
+void validate_hexstr_to_bytes_conversion(void **state) {
   (void) state; // Unused
 
   byte test1[1];
-  import_raw_bytes(test1, "a2");
+  hexstr_to_bytes("a2", test1);
   assert_int_equal(*test1, 0xa2);
 
   byte test2[5];
-  import_raw_bytes(test2, "139ac7ffd5");
+  hexstr_to_bytes("139ac7ffd5", test2);
   assert_int_equal(test2[0], 0x13);
   assert_int_equal(test2[1], 0x9a);
   assert_int_equal(test2[2], 0xc7);
@@ -21,9 +22,10 @@ void validate_raw_bytes(void **state) {
   assert_int_equal(test2[4], 0xd5);
 }
 
+
 int main(void) {
   const struct CMUnitTest tests[] = {
-    cmocka_unit_test(validate_raw_bytes)
+    cmocka_unit_test(validate_hexstr_to_bytes_conversion),
   };
 
   return cmocka_run_group_tests(tests, NULL, NULL);

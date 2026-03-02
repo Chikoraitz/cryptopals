@@ -216,7 +216,7 @@ int detect_single_byte_key_xor(FILE * fp, char * cipher, char * msg) {
   while(fgets(fstr, cstr_size + 1, fp) != NULL) {
     // Remove new line characters
     fstr[strcspn(fstr, "\n")] = '\0';
-    import_raw_bytes(buffer->payload, fstr);
+    hexstr_to_bytes(buffer->payload, fstr);
 
     cipher_best.score = 100.0; // Arbitrarily large value
     single_xor_decrypt(&cipher_best, buffer);

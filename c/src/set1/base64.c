@@ -1,98 +1,72 @@
 #include "../../include/set1/base64.h"
 
-/**
- * get_base64_size() - Calculates the base64-encoded string size
- * @hex_string: Hexadecimal string representation of raw binary data 
- * 
- * This function calculates the size of the associated base64-encoded string.
- * Since we know that base64-encoded strings introduce an overhead of 33% on 
- * the message, all the parameters are known to calculate the string size of 
- * the associated base64-encoded string.
- * 
- * Return: 
- * @(int): Base64-encoded string size 
-*/
-const int get_base64_size(const char * hex_string) {
-  const int n_bytes = strlen(hex_string) / NIBBLE_BYTE;
-  return ((BASE64_BLOCK_BUFFER_SIZE * n_bytes / BINARY_BLOCK_BUFFER_SIZE) + 3) & ~3;
+const char base64_lookup_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const char base64_padding = '=';
+
+
+const int get_base64_size(const char * hexstr) {
+  const int n_bytes = strlen(hexstr) / NIBBLE_BYTE;
+  return ((BASE64_BLOCK_SIZE * n_bytes / BINARY_BLOCK_SIZE) + 3) & ~3;
 }
 
 
-/**
- * base64_encode_hex_string() - Converts string of hex binary data into its base64-encoding scheme.
- * @base64_res:   String output of the base64 encoding
- * @hex_string:   Hexadecimal data string
- * 
- * Function wrapper for the base64 encoding operation over raw data.
-*/
-void base64_encode_hex_string(char * base64_res, const char * hex_string) {
-  Data * _d = allocate_bytes(strlen(hex_string) / NIBBLE_BYTE);
+static inline int base64_encode_block(byte * in_b_block, char * in_b64_block, char * out_base64_block, int pos) { 
+  byte data[BASE64_BLOCK_SIZE];
 
-  import_raw_bytes(_d->payload, hex_string);
-  base64_encode_raw(base64_res, _d);
+  for(int i=0; i < BASE64_BLOCK_SIZE; i++) {
+    switch(i) {
+      case 0: data[i] = in_b_block[0] >> 2; break;
+      case 1: { 
+        data[i] = in_b_block[1] >> 4 | (in_b_block[0] & ((byte)~0 >> 6)) << 4; 
+      } break;
+      case 2: { 
+        data[i] = in_b_block[1] != 0 ? 
+                  in_b_block[2] >> 6 | (in_b_block[1] & ((byte)~0 >> 4)) << 2 : 
+                  (byte)~0; 
+      } break;
+      case 3: { 
+        data[i] = in_b_block[2] != 0 ? 
+                  in_b_block[2] & ((byte) ~0 >> 2) : 
+                  (byte)~0;
+      }
+    }
+    
+    // Check for padding content, else lookup the encoding scheme
+    out_base64_block[pos] = data[i] == (byte)~0 ? '=' : base64_lookup_chars[data[i]];
+    pos++;
+  }
 
-  deallocate(_d);
+  return pos;
 }
 
 
-/**
- * base64_decode_to_hex_string() - Converts base64-encoded scheme into its plain (hex) string data.
- * @hex_string:       Hexadecimal data string output
- * @base64_string:    Base64-encoded string
- * 
- * Function wrapper for the base64 decoding operation over raw data.
-*/
-void base64_decode_to_hex_string(char * hex_string, const char * base64_string) {
-
-}
-
-
-/**
- * base64_encode_raw() - Converts raw binary data into its base64 encoding scheme.
- * @base64_res:   String output of the base64 encoding
- * @raw_data:     Raw binary data
- * 
- * This function iterates over all raw binary data elements, aggregates them
- * in blocks of 3 and extrapolates the data into a block for 4 elements according
- * to the base46 encoding rules. 
-*/
-void base64_encode_raw(char * base64_res, const Data * data) {
-
-  byte b_block[BINARY_BLOCK_BUFFER_SIZE];
-  char b64_block[BASE64_BLOCK_BUFFER_SIZE];
+void bytes_to_base64(const byte * data, char * result_buffer) {
+  byte b_block[BINARY_BLOCK_SIZE];
+  char b64_block[BASE64_BLOCK_SIZE];
 
   int b_block_i; 
   int pos = 0;
 
-  for(int i=0; i < data->size; i++) {
-    b_block_i = i % BINARY_BLOCK_BUFFER_SIZE;
-    b_block[b_block_i] = data->payload[i];
+  for(int i=0; i < strlen(data); i++) {
+    // Fill the binary buffer block (size 3)
+    b_block_i = i % BINARY_BLOCK_SIZE;
+    b_block[b_block_i] = data[i];
 
-    // Encode to base64 characters when binary buffer block is full
-    if(b_block_i == BINARY_BLOCK_BUFFER_SIZE - 1) { 
-      pos = base64_convert(base64_res, b_block, b64_block, pos);
+    // When filled, encode to base64 schema
+    if(b_block_i == BINARY_BLOCK_SIZE - 1) {
+      pos = base64_encode_block(b_block, b64_block, result_buffer, pos);
     }
   }
 
-  // If base64 block is not completed, fill the remaining bytes of the block with 0s 
-  if(b_block_i < BINARY_BLOCK_BUFFER_SIZE - 1) {
-    for(int i=b_block_i+1; i < BINARY_BLOCK_BUFFER_SIZE; i++) b_block[i] = 0x0;
-    pos = base64_convert(base64_res, b_block, b64_block, pos);
+  /** Padding:
+   *  If base64 block is not completed, 
+  /*  fill the remaining bytes of the block with 0s 
+  */
+  if(b_block_i < BINARY_BLOCK_SIZE - 1) {
+    for(int i=b_block_i+1; i < BINARY_BLOCK_SIZE; i++) b_block[i] = 0x0;
+    pos = base64_encode_block(b_block, b64_block, result_buffer, pos);
   }
 
-  base64_res[pos] = '\0';
+  result_buffer[pos] = '\0';
 } 
 
-
-/**
- * base64_decode_raw() - Converts raw binary data into its base64 encoding scheme.
- * @base64_res:   String output of the base64 encoding
- * @raw_data:     Raw binary data
- * 
- * This function iterates over all raw binary data elements, aggregates them
- * in blocks of 3 and extrapolates the data into a block for 4 elements according
- * to the base46 encoding rules. 
-*/
-void base64_decode_raw(Data * hex_data, const char * base64_string) {
-
-}
