@@ -95,32 +95,24 @@ void validate_challenge2(void ** state) {
 */
 void validate_challenge3(void ** state) {
   (void) state; // Unused
+  // Scope variables
   enum { MSG_BUFFER_SIZE = 200 };
-  const char ciphertext_hexstr[] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-  byte ciphertext_bytes[100] = {0x0};
+  const char cipher_hexstr[] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+  
+  // Buffers
+  byte cipher_bytes_buffer[100] = {0x0}, key_buffer[1] = {0x0};
+  char plaintext_buffer[MSG_BUFFER_SIZE];
 
-  char best_text_buffer[MSG_BUFFER_SIZE];
-  byte key_buffer[1] = {0x0};
-
+  // Initializations
   const ByteData cipherbytes = {
-    .size = strlen(ciphertext_hexstr) / NIBBLE_BYTE,
-    .content = ciphertext_bytes
-  };
-
-  ByteData msg_data = {
-    .size = cipherbytes.size,
-    .content = best_text_buffer
-  };
-
-  ByteData key_data = {
-    .size = 1,
-    .content = key_buffer
+    .size = strlen(cipher_hexstr) / NIBBLE_BYTE,
+    .content = cipher_bytes_buffer
   };
 
   LanguageScore best = {
     .score = 300.0, // Arbitrarily large value
-    .decrypted = &msg_data,
-    .key = &key_data
+    .decrypted = &(ByteData){ .size = cipherbytes.size, .content = plaintext_buffer},
+    .key = &(ByteData){ .size = 1, .content = key_buffer}
   };
 
   assert_double_equal(en_score("aaaaAAAA", 8), 86.155, 0.1);
@@ -129,40 +121,85 @@ void validate_challenge3(void ** state) {
   assert_double_equal(en_score("Timed voice share led his widen noisy young", 43), 18.30, 0.1);
   assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large.", 127), 39.33, 0.1);
 
-  hexstr_to_bytes(ciphertext_hexstr, ciphertext_bytes);
+  hexstr_to_bytes(cipher_hexstr, cipherbytes.content);
   single_xor_decrypt(cipherbytes, &best);
 
   assert_int_equal(*best.key->content, 0x58);
   assert_string_equal(best.decrypted->content, "Cooking MC's like a pound of bacon");
 }
 
-// /**
-//  * Challenge 4:
-//  * Detect single-character XOR ciphers
-// */
-// void validate_challenge4(void ** state) {
-//   (void) state;
+/**
+ * Challenge 4:
+ * Detect single-character XOR ciphers
+*/
+void validate_challenge4(void ** state) {
+  (void) state;
+  // Scope variables
+  enum { CIPHER_SIZE = 30};
+  /* All ciphers have size 30 bytes, so their hex string 
+  /* representation will have 60 */
+  const size_t HEXSTR_BUFFER_SIZE = (CIPHER_SIZE * NIBBLE_BYTE) + 1;
 
-//   // All ciphers have size 30 bytes, so their hex string representation will have 60
-//   char cipher[60];
-//   char msg[30];
+  // Buffers
+  char cipher_hexstr[HEXSTR_BUFFER_SIZE];
+  char fstr[HEXSTR_BUFFER_SIZE];
+  char cipher_plaintext_buffer[CIPHER_SIZE];
+  char file_plaintext_buffer[CIPHER_SIZE];
+  
+  byte cipher_bytes_buffer[CIPHER_SIZE] = {0x0};  // Best score text for particular key of a cipher    
+  byte file_bytes[CIPHER_SIZE] = {0x0};           // Best score text for particular cipher in file
+  byte cipher_key_buffer[1] = {0x0}, file_key_buffer[1] = {0x0};
 
-//   FILE * fp; 
-//   const char * filename = "../../assets/set1/4.txt";
+  // Initializations
+  FILE * fp; 
+  const char * filename = "../../assets/set1/4.txt";
 
-//   if((fp = fopen(filename, "r")) == NULL) {
-//     printf("Can't open file: %s\n", filename);
-//     assert_true(0x0);
-//   }
+  const ByteData cipherbytes = {
+    .size = CIPHER_SIZE,
+    .content = cipher_bytes_buffer
+  };
 
-//   const int error = detect_single_byte_key_xor(fp, cipher, msg);
+  LanguageScore cipher_best = {
+    .score = 300.0,
+    .decrypted = &(ByteData){ .size = CIPHER_SIZE, .content = cipher_plaintext_buffer },
+    .key = &(ByteData){ .size = 1, .content = cipher_key_buffer }
+  };
 
-//   assert_int_equal(error, 0x0);
-//   assert_string_equal(cipher, "7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f");
-//   assert_string_equal(msg, "Now that the party is jumping\n");
+  LanguageScore file_best = {
+    .score = 300.0,
+    .decrypted = &(ByteData){ .size = CIPHER_SIZE, .content = file_plaintext_buffer },
+    .key = &(ByteData){ .size = 1, .content = file_key_buffer }
+  };
 
-//   fclose(fp);
-// }
+  // Algorithm
+  if((fp = fopen(filename, "r")) == NULL) {
+    printf("Can't open file: %s\n", filename);
+    assert_true(0x0);
+  }
+  else {
+    while(fgets(fstr, HEXSTR_BUFFER_SIZE, fp) != NULL) {
+      // Replace new line characters with string-terminal characters
+      fstr[strcspn(fstr, "\n")] = '\0';
+      hexstr_to_bytes(fstr, cipherbytes.content);
+      
+      cipher_best.score = 300.0;
+      single_xor_decrypt(cipherbytes, &cipher_best);
+      
+      if(cipher_best.score < file_best.score) {
+        file_best.score = cipher_best.score;
+        strncpy(file_best.decrypted->content, cipher_best.decrypted->content, CIPHER_SIZE);
+        file_best.decrypted->content[CIPHER_SIZE] = '\0';
+        *file_best.key->content = *cipher_best.key->content;
+        strncpy(cipher_hexstr, fstr, HEXSTR_BUFFER_SIZE);
+      }
+    }
+  }
+
+  assert_string_equal(cipher_hexstr, "7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f");
+  assert_string_equal(file_best.decrypted->content, "Now that the party is jumping\n");
+
+  fclose(fp);
+}
 
 
 // /**
@@ -240,7 +277,7 @@ int main(void) {
     cmocka_unit_test(validate_challenge1),
     cmocka_unit_test(validate_challenge2),
     cmocka_unit_test(validate_challenge3),
-    // cmocka_unit_test(validate_challenge4),
+    cmocka_unit_test(validate_challenge4),
     // cmocka_unit_test(validate_challenge5),
     // cmocka_unit_test(validate_challenge6)
   };

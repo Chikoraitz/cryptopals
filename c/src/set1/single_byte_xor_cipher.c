@@ -84,25 +84,19 @@ double en_score(const char * plaintext_msg, const int text_len) {
 
 
 void single_xor_decrypt(const ByteData cipher, LanguageScore * out) {
+  // Scope variables
   enum { MSG_BUFFER_SIZE = 200 };
+  double score;
+  
+  // Buffers
   char try_text[MSG_BUFFER_SIZE];
   byte key_buffer[1] = {0x0};
-  double score;
 
-  ByteData key_data = {
-    .size = 1,
-    .content = key_buffer
-  };
-
-  ByteData xored_msg = {
-    .size = out->decrypted->size,
-    .content = try_text
-  };
-
+  // Initializations
   LanguageScore try = {
     .score = 100.0,
-    .decrypted = &xored_msg,
-    .key = &key_data
+    .decrypted = &(ByteData) { .size = out->decrypted->size, .content = try_text },
+    .key = &(ByteData) { .size = 1, .content = key_buffer },
   };
 
   for(uint8_t key=0x00; key<0xff; key++) {
@@ -116,69 +110,8 @@ void single_xor_decrypt(const ByteData cipher, LanguageScore * out) {
       out->score = try.score;
       strncpy(out->decrypted->content, try.decrypted->content, out->decrypted->size);
       out->decrypted->content[out->decrypted->size] = '\0';
-      // printf("%s, length: %d\n", out->decrypted->content, strlen(out->decrypted->content));
       *out->key->content = *try.key->content;
     } 
   }
 }
 
-
-// /**
-//  * detect_single_key_xor_from() - Detects a cipher encrypted by a single-byte 
-//  * key XOR from a list of ciphers located in a file
-//  * @fp:         Pointer to file where the list of ciphers is located
-//  * @cipher:     Single-byte XOR-encrypted cipher detected in its hexadecimal representation 
-//  * @msg:        Decrypted message
-//  *  
-//  * Iterates over all 256 XOR-decrypted messages of all XOR-encrypted ciphers from the text file
-//  * and computes the chi-square calculation for all possibilities. The most likely decryption 
-//  * estimation has the lowest score (closest to zero).   
-//  * 
-//  * Return:
-//  * @(int):      Status code
-// */
-// int detect_single_byte_key_xor_legacy(FILE * fp, char * cipher, char * msg) {
-//   // All ciphers present in the text file have 30 bytes and are separated by a newline character
-//   Data * buffer = allocate_bytes(30);    
-//   const int cstr_size = buffer->size * NIBBLE_BYTE; 
-//   char fstr[cstr_size + 1];
-
-//   LanguageScore cipher_best = {
-//     .score = 100.0, // Arbitrarily large value
-//     .text = allocate_bytes(buffer->size),
-//     .key = (byte *) malloc(sizeof(byte *))
-//   };
-
-//   LanguageScore file_best = {
-//     .score = 100.0, // Arbitrarily large value
-//     .text = allocate_bytes(buffer->size),
-//     .key = (byte *) malloc(sizeof(byte *))
-//   };
-
-//   while(fgets(fstr, cstr_size + 1, fp) != NULL) {
-//     // Remove new line characters
-//     fstr[strcspn(fstr, "\n")] = '\0';
-//     hexstr_to_bytes(buffer->content, fstr);
-
-//     cipher_best.score = 100.0; // Arbitrarily large value
-//     single_xor_decrypt(&cipher_best, buffer);
-    
-//     if(cipher_best.score < file_best.score) {
-//       file_best.score = cipher_best.score;
-//       memcpy(file_best.text->content, cipher_best.text->content, buffer->size);
-//       memcpy(file_best.key, cipher_best.key, 1);
-//       strncpy(cipher, fstr, cstr_size + 1);
-//     }
-//   }
-
-//   strncpy(msg, file_best.text->content, buffer->size);
-
-
-//   deallocate(buffer);
-//   deallocate(cipher_best.text);
-//   deallocate(file_best.text);
-//   free(cipher_best.key);
-//   free(file_best.key);
-
-//   return 0;
-// }
