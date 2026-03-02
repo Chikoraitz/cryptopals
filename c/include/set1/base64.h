@@ -11,7 +11,7 @@
 
 
 const int get_base64_size(const char *);
-void bytes_to_base64(const byte *, char *);
+void bytes_to_base64(const byte *, char *, const size_t);
 
 extern const char base64_lookup_chars[];
 extern const char base64_padding;

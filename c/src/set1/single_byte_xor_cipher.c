@@ -53,7 +53,7 @@ void single_xor_decrypt(LanguageScore * msg, const Data * encrypt_msg) {
   Data * xor_key = allocate_bytes(sizeof(byte));
 
   do {
-    xor(try.text, encrypt_msg, xor_key);
+    xor_legacy(try.text, encrypt_msg, xor_key);
 
     // Get the plaintext message and evaluate its language score
     memcpy(try.key, xor_key->payload, key_size);
@@ -195,7 +195,7 @@ double en_score(const char * plaintext_msg, const int text_len) {
  * Return:
  * @(int):      Status code
 */
-int detect_single_byte_key_xor(FILE * fp, char * cipher, char * msg) {
+int detect_single_byte_key_xor_legacy(FILE * fp, char * cipher, char * msg) {
   // All ciphers present in the text file have 30 bytes and are separated by a newline character
   Data * buffer = allocate_bytes(30);    
   const int cstr_size = buffer->size * NIBBLE_BYTE; 

@@ -28,37 +28,10 @@
 */
 #define BIT_BYTE      8
 
+// Most/Least Significant Nibble
+enum { MSN = 0, LSN = 1 };
 
-/**
- * typedef enum nibble - Most and least signficant nibble in a byte
- * 
- * When dealing with pairs of nibbles for raw byte handling, 
- * it is useful to have a more suggestive nomenclature for handling 
- * which is the most and the least significant nibble.
- * 
- * %MSN: 0
- * %LSN: 1
-*/
-typedef enum { MSN = 0, LSN = 1 } nibble;
-
-/**
- * typedef byte - Data type of raw data
- * 
- * When dealing with raw data, it is useful to rename the smaller built-in 
- * memory quantity into a more suggestive name.
-*/
 typedef unsigned char byte;
-
-/**
- * typedef struct Data - Data structure of raw data 
- * 
- * When dealing with raw data, it is useful to define a data structure
- * that allows for better handling its element iteration inside loops.
- * 
- * @size:     Size of the raw content
- * @content:  Raw content 
- * 
-*/
 typedef struct SData {
   size_t size;
   byte payload[];
@@ -66,7 +39,7 @@ typedef struct SData {
 
 
 void hexstr_to_bytes(const char *, byte *);
-void bytes_to_hexstr(const Data *, char *);
+void bytes_to_hexstr(const byte *, char *, const size_t);
 
 
 /**

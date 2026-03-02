@@ -15,12 +15,11 @@
 */
 void validate_challenge1(void ** state) {
   (void) state; // Unused
+  enum { N_TESTS = 5, BUFFER_SIZE = 100 };
 
-  char b64_buffer[100];
-  byte byte_buffer[100];
-  char plaintext_buffer[100];
-
-  const uint8_t n_tests = 5;
+  char b64_buffer[BUFFER_SIZE];
+  byte byte_buffer[BUFFER_SIZE] = {0x0};
+  char plaintext_buffer[BUFFER_SIZE];
 
   const char * test_cases_hexstr[] = {
     "414243", "41424344", "4546474849", "4a4b4c4d4e4f",
@@ -37,10 +36,10 @@ void validate_challenge1(void ** state) {
     "I'm killing your brain like a poisonous mushroom"
   };
 
-  for(int i=0; i < n_tests; i++) {
+  for(int i=0; i < N_TESTS; i++) {
     // Base64 encoding tests
     hexstr_to_bytes(test_cases_hexstr[i], byte_buffer);
-    bytes_to_base64(byte_buffer, b64_buffer);
+    bytes_to_base64(byte_buffer, b64_buffer, strlen(test_cases_hexstr[i]) / NIBBLE_BYTE);
     assert_string_equal(b64_buffer, test_cases_b64[i]);
 
     // base64_to_bytes(b64_buffer, plaintext_buffer);
@@ -49,36 +48,30 @@ void validate_challenge1(void ** state) {
 }
 
 
-// /**
-//  * Challenge 2:
-//  * One-time pad XOR encryption
-// */
-// void validate_challenge2(void ** state) {
-//   (void) state; // Unused
-  
-//   const char xor_string1[] = "1c0111001f010100061a024b53535009181c";
-//   const char xor_string2[] = "686974207468652062756c6c277320657965";   
+/**
+ * Challenge 2:
+ * One-time pad XOR encryption
+*/
+void validate_challenge2(void ** state) {
+  (void) state; // Unused
+  enum { BUFFER_SIZE = 50, BYTE_OPERAND_SIZE = 18 };
 
-//   // This test only requires same-length strings
-//   size_t size = strlen(xor_string1) / NIBBLE_BYTE;
-//   char hex_result_string[strlen(xor_string1) + 1];
+  const char xor_hexstr1[] = "1c0111001f010100061a024b53535009181c";
+  const char xor_hexstr2[] = "686974207468652062756c6c277320657965";
 
-//   Data * xor_operand1 = allocate_bytes(size);
-//   Data * xor_operand2 = allocate_bytes(size);
-//   Data * xor_res = allocate_bytes(size);
-    
-//   hexstr_to_bytes(xor_operand1->payload, xor_string1);
-//   hexstr_to_bytes(xor_operand2->payload, xor_string2);
+  byte xor_bytes_op1[BUFFER_SIZE] = {0x0};
+  byte xor_bytes_op2[BUFFER_SIZE] = {0x0};
+  byte xor_bytes_result[BUFFER_SIZE] = {0x0};
+  char hexstr_result[BUFFER_SIZE];
 
-//   xor(xor_res, xor_operand1, xor_operand2);
+  hexstr_to_bytes(xor_hexstr1, xor_bytes_op1);
+  hexstr_to_bytes(xor_hexstr2, xor_bytes_op2);
 
-//   bytes_to_hexstr(hex_result_string, xor_res);
-//   assert_string_equal(hex_result_string, "746865206b696420646f6e277420706c6179");
-  
-//   deallocate(xor_operand1);
-//   deallocate(xor_operand2);
-//   deallocate(xor_res);
-// }
+  xor(xor_bytes_op1, xor_bytes_op2, xor_bytes_result, BUFFER_SIZE);
+
+  bytes_to_hexstr(xor_bytes_result, hexstr_result, BYTE_OPERAND_SIZE);
+  assert_string_equal(hexstr_result, "746865206b696420646f6e277420706c6179");
+}
 
 
 // /**
@@ -218,7 +211,7 @@ void validate_challenge1(void ** state) {
 int main(void) {
   const struct CMUnitTest tests[] = {
     cmocka_unit_test(validate_challenge1),
-    // cmocka_unit_test(validate_challenge2),
+    cmocka_unit_test(validate_challenge2),
     // cmocka_unit_test(validate_challenge3),
     // cmocka_unit_test(validate_challenge4),
     // cmocka_unit_test(validate_challenge5),

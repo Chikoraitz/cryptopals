@@ -25,7 +25,7 @@ static int hamming_distance(const char * string1, const char * string2, const in
   strncpy(byte_stream1->payload, string1, s_len);
   strncpy(byte_stream2->payload, string2, s_len);
 
-  xor(byte_res, byte_stream1, byte_stream2);
+  xor_legacy(byte_res, byte_stream1, byte_stream2);
 
   for(int i=0; i < byte_res->size; i++) {
     for(int j=0; j < BIT_BYTE; j++) {

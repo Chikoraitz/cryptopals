@@ -40,17 +40,17 @@ static inline int base64_encode_block(byte * in_b_block, char * in_b64_block, ch
 }
 
 
-void bytes_to_base64(const byte * data, char * result_buffer) {
+void bytes_to_base64(const byte * in, char * result_buffer, const size_t in_size) {
   byte b_block[BINARY_BLOCK_SIZE];
   char b64_block[BASE64_BLOCK_SIZE];
 
   int b_block_i; 
   int pos = 0;
 
-  for(int i=0; i < strlen(data); i++) {
+  for(int i=0; i<in_size; i++) {
     // Fill the binary buffer block (size 3)
     b_block_i = i % BINARY_BLOCK_SIZE;
-    b_block[b_block_i] = data[i];
+    b_block[b_block_i] = in[i];
 
     // When filled, encode to base64 schema
     if(b_block_i == BINARY_BLOCK_SIZE - 1) {
