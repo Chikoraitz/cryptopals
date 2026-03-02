@@ -32,10 +32,10 @@
 enum { MSN = 0, LSN = 1 };
 
 typedef unsigned char byte;
-typedef struct SData {
+typedef struct SByteData {
   size_t size;
-  byte payload[];
-} Data;
+  byte * content;
+} ByteData;
 
 
 void hexstr_to_bytes(const char *, byte *);
@@ -45,15 +45,15 @@ void bytes_to_hexstr(const byte *, char *, const size_t);
 /**
  * 
 */
-static inline Data * allocate_bytes(size_t size) {
-  Data * d = calloc(sizeof(Data) + size, sizeof(byte));
+static inline ByteData * allocate_bytes(size_t size) {
+  ByteData * d = calloc(sizeof(ByteData) + size, sizeof(byte));
   
   if(d == NULL) {
     printf("Unable to allocate memory...");
     exit(EXIT_FAILURE);
   }
 
-  memcpy(d, &(Data const){.size = size}, sizeof(Data));
+  memcpy(d, &(ByteData const){.size = size}, sizeof(ByteData));
 
   return d;
 }
@@ -62,7 +62,7 @@ static inline Data * allocate_bytes(size_t size) {
 /**
  * 
 */
-static inline void deallocate(Data * data) {
+static inline void deallocate(ByteData * data) {
   free(data);
 }
 

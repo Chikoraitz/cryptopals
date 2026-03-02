@@ -8,7 +8,6 @@
 
 #include "../utils/data_conversion.h"
 
-void xor_legacy(Data *, const Data *, const Data *);
-void xor(const byte *, const byte *, byte *, const size_t); 
+void xor(const ByteData, const ByteData, ByteData *); 
 
 #endif

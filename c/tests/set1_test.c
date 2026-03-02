@@ -58,56 +58,83 @@ void validate_challenge2(void ** state) {
 
   const char xor_hexstr1[] = "1c0111001f010100061a024b53535009181c";
   const char xor_hexstr2[] = "686974207468652062756c6c277320657965";
+  char hexstr_result[BUFFER_SIZE];
 
   byte xor_bytes_op1[BUFFER_SIZE] = {0x0};
   byte xor_bytes_op2[BUFFER_SIZE] = {0x0};
   byte xor_bytes_result[BUFFER_SIZE] = {0x0};
-  char hexstr_result[BUFFER_SIZE];
+
+  ByteData xor_op1 = {
+    .size = BUFFER_SIZE,
+    .content = xor_bytes_op1
+  };
+
+  ByteData xor_op2  = {
+    .size = BUFFER_SIZE,
+    .content = xor_bytes_op2
+  };
+
+  ByteData xor_result = {
+    .size = BUFFER_SIZE,
+    .content = xor_bytes_result
+  };
 
   hexstr_to_bytes(xor_hexstr1, xor_bytes_op1);
   hexstr_to_bytes(xor_hexstr2, xor_bytes_op2);
 
-  xor(xor_bytes_op1, xor_bytes_op2, xor_bytes_result, BUFFER_SIZE);
+  xor(xor_op1, xor_op2, &xor_result);
 
   bytes_to_hexstr(xor_bytes_result, hexstr_result, BYTE_OPERAND_SIZE);
   assert_string_equal(hexstr_result, "746865206b696420646f6e277420706c6179");
 }
 
 
-// /**
-//  * Challenge 3:
-//  * Single-byte XOR cipher decryption
-// */
-// void validate_challenge3(void ** state) {
-//   (void) state; // Unused
-  
-//   assert_double_equal(en_score("aaaaAAAA", 8), 86.155, 0.1);
-//   assert_double_equal(en_score("abab ABAB", 9), 112.06, 0.1);
-//   assert_double_equal(en_score("aBe abE ABe AbE", 15), 79.99, 0.1);
-//   assert_double_equal(en_score("Timed voice share led his widen noisy young", 43), 18.30, 0.1);
-//   assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large.", 127), 39.33, 0.1);
-  
-//   const char * encrypt_msg_string = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+/**
+ * Challenge 3:
+ * Single-byte XOR cipher decryption
+*/
+void validate_challenge3(void ** state) {
+  (void) state; // Unused
+  enum { MSG_BUFFER_SIZE = 200 };
+  const char ciphertext_hexstr[] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+  byte ciphertext_bytes[100] = {0x0};
 
-//   Data * encrypt_msg = allocate_bytes(strlen(encrypt_msg_string) / NIBBLE_BYTE);
+  char best_text_buffer[MSG_BUFFER_SIZE];
+  byte key_buffer[1] = {0x0};
 
-//   LanguageScore best = {
-//     .score = 100.0, // Arbitrarily large value
-//     .text = allocate_bytes(encrypt_msg->size),
-//     .key = (byte *) malloc(sizeof(byte))
-//   };
-  
-//   hexstr_to_bytes(encrypt_msg->payload, encrypt_msg_string);
-//   single_xor_decrypt(&best, encrypt_msg);
+  const ByteData cipherbytes = {
+    .size = strlen(ciphertext_hexstr) / NIBBLE_BYTE,
+    .content = ciphertext_bytes
+  };
 
-//   assert_int_equal(*best.key, 0x58);
-//   assert_string_equal(best.text->payload, "Cooking MC's like a pound of bacon");
+  ByteData msg_data = {
+    .size = cipherbytes.size,
+    .content = best_text_buffer
+  };
 
-//   deallocate(encrypt_msg);
-//   deallocate(best.text);
-//   free(best.key);
-// }
+  ByteData key_data = {
+    .size = 1,
+    .content = key_buffer
+  };
 
+  LanguageScore best = {
+    .score = 300.0, // Arbitrarily large value
+    .decrypted = &msg_data,
+    .key = &key_data
+  };
+
+  assert_double_equal(en_score("aaaaAAAA", 8), 86.155, 0.1);
+  assert_double_equal(en_score("abab ABAB", 9), 112.06, 0.1);
+  assert_double_equal(en_score("aBe abE ABe AbE", 15), 79.99, 0.1);
+  assert_double_equal(en_score("Timed voice share led his widen noisy young", 43), 18.30, 0.1);
+  assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large.", 127), 39.33, 0.1);
+
+  hexstr_to_bytes(ciphertext_hexstr, ciphertext_bytes);
+  single_xor_decrypt(cipherbytes, &best);
+
+  assert_int_equal(*best.key->content, 0x58);
+  assert_string_equal(best.decrypted->content, "Cooking MC's like a pound of bacon");
+}
 
 // /**
 //  * Challenge 4:
@@ -158,8 +185,8 @@ void validate_challenge2(void ** state) {
 //   Data * byte_key = allocate_bytes(key_size);
 //   Data * msg_encrypted = allocate_bytes(msg_size);
 
-//   strncpy(byte_text->payload, msg, byte_text->size);
-//   strncpy(byte_key->payload, key, byte_key->size);
+//   strncpy(byte_text->content, msg, byte_text->size);
+//   strncpy(byte_key->content, key, byte_key->size);
 
 //   xor(msg_encrypted, byte_text, byte_key);
 //   bytes_to_hexstr(msg_encrypted_hex, msg_encrypted);
@@ -212,7 +239,7 @@ int main(void) {
   const struct CMUnitTest tests[] = {
     cmocka_unit_test(validate_challenge1),
     cmocka_unit_test(validate_challenge2),
-    // cmocka_unit_test(validate_challenge3),
+    cmocka_unit_test(validate_challenge3),
     // cmocka_unit_test(validate_challenge4),
     // cmocka_unit_test(validate_challenge5),
     // cmocka_unit_test(validate_challenge6)

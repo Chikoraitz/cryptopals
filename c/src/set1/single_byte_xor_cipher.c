@@ -32,104 +32,6 @@ const double freq_expected[] = {
 
 
 /**
- * single_xor_decrypt() - Brute-force of the XOR-encrypted message.
- * @msg:          Decrypted message content
- * @encrypt_msg:  XOR-encrypted message
- * 
- * This function brute-forces the XOR key based on the key size provided.
- * The key size will determine the complete set of possible XOR keys used 
- * to encrypt the message.
-*/
-void single_xor_decrypt(LanguageScore * msg, const Data * encrypt_msg) {
-  const int key_size = sizeof(byte);
-  byte is_new_key;
-
-  LanguageScore try = {
-    .score = 100.0,
-    .text = allocate_bytes(msg->text->size),
-    .key = (byte *) malloc(sizeof(byte))
-  };
-
-  Data * xor_key = allocate_bytes(sizeof(byte));
-
-  do {
-    xor_legacy(try.text, encrypt_msg, xor_key);
-
-    // Get the plaintext message and evaluate its language score
-    memcpy(try.key, xor_key->payload, key_size);
-    score_assessment(msg, &try, try.text->size, key_size);
-
-    // Checks if the 0x00 key is generated again and exits the loop
-    is_new_key = generate_next_key_try(xor_key->payload, key_size);
-
-  } while(is_new_key);
-
-  deallocate(try.text);
-  deallocate(xor_key);
-  free(try.key);
-}
-
-
-/**
- * generate_next_key_try() - Generates the next XOR key to be tested against the XOR-encrypted message.
- * @buffer: Key byte array content
- * @size:   Size of the key byte array
- * 
- * Single increments of raw byte array value. To avoid having to be restricted to
- * the maximum values defined by C, it handles each byte independently. Hence, it
- * updates increasingly larger significant bytes by detecting its overflow -
- * similar to how a low-level register keeps track of values in counters.
- * 
- * Return:
- * @new:    Handler that indicates if the new key generated has not already been tested.
- *          Brute-force loop ending criteria.  
-*/
-static byte generate_next_key_try(byte * buffer, const int size) {
-  byte new = 0;
-
-  buffer[LSB(size)]++;
-
-  // Iterate from least significant byte to most significant byte
-  for(int i=LSB(size); i >= MSB; i--) {
-    // Checks if the new generated key is 0x00 meaning that all combinations were exhausted
-    new |= buffer[i];
-
-    // Detect overflows
-    if(buffer[i] == 0x00 && i != MSB) buffer[i-1]++;
-    else break;
-  }
-
-  return new;
-}
-
-
-/**
- * score_assessment() - English text score assessment
- * @best:           Message that is most likely to be English text   
- * @try:            Next iterated message
- * @content_size:   Message size
- * @key_size:       Size of the key byte array
- * 
- * Compares the plaintext try with the most likely plaintext to be an English
- * sentence. The closest the score is to 0, the closest it is from the expected 
- * character frequency, the most liekly it is to be an English sentence.
-*/
-static void score_assessment(LanguageScore * best, LanguageScore * try, const int text_size, const int key_size) {
-  try->score = en_score(try->text->payload, text_size);
-
-  if(try->score < best->score) {
-    best->score = try->score;
-    memcpy(best->text->payload, try->text->payload, text_size);
-    memcpy(best->key, try->key, key_size);
-  }
-}
-
-
-/**
- * en_score() - Chi-squared English score
- * @plaintext_msg:  English message subject to evaluation 
- * @text_len:       Text length
- * 
  * The score compilation is based on the Pearson's chi-squared value.
  * This means that the smaller the score, the more closely the decrypted
  * message resembles an English sentence.
@@ -160,7 +62,7 @@ double en_score(const char * plaintext_msg, const int text_len) {
       char_freq[ALPHABET_SIZE]++;        // TAB, CR, LF - ignored
     }
     // Non-printable ASCII - return an arbitrarily long value
-    else return 100.0;                  
+    else return 1000.0;                  
   }
 
   // If the ratio of non-alphabetic characters is higher than
@@ -181,62 +83,102 @@ double en_score(const char * plaintext_msg, const int text_len) {
 }
 
 
-/**
- * detect_single_key_xor_from() - Detects a cipher encrypted by a single-byte 
- * key XOR from a list of ciphers located in a file
- * @fp:         Pointer to file where the list of ciphers is located
- * @cipher:     Single-byte XOR-encrypted cipher detected in its hexadecimal representation 
- * @msg:        Decrypted message
- *  
- * Iterates over all 256 XOR-decrypted messages of all XOR-encrypted ciphers from the text file
- * and computes the chi-square calculation for all possibilities. The most likely decryption 
- * estimation has the lowest score (closest to zero).   
- * 
- * Return:
- * @(int):      Status code
-*/
-int detect_single_byte_key_xor_legacy(FILE * fp, char * cipher, char * msg) {
-  // All ciphers present in the text file have 30 bytes and are separated by a newline character
-  Data * buffer = allocate_bytes(30);    
-  const int cstr_size = buffer->size * NIBBLE_BYTE; 
-  char fstr[cstr_size + 1];
+void single_xor_decrypt(const ByteData cipher, LanguageScore * out) {
+  enum { MSG_BUFFER_SIZE = 200 };
+  char try_text[MSG_BUFFER_SIZE];
+  byte key_buffer[1] = {0x0};
+  double score;
 
-  LanguageScore cipher_best = {
-    .score = 100.0, // Arbitrarily large value
-    .text = allocate_bytes(buffer->size),
-    .key = (byte *) malloc(sizeof(byte *))
+  ByteData key_data = {
+    .size = 1,
+    .content = key_buffer
   };
 
-  LanguageScore file_best = {
-    .score = 100.0, // Arbitrarily large value
-    .text = allocate_bytes(buffer->size),
-    .key = (byte *) malloc(sizeof(byte *))
+  ByteData xored_msg = {
+    .size = out->decrypted->size,
+    .content = try_text
   };
 
-  while(fgets(fstr, cstr_size + 1, fp) != NULL) {
-    // Remove new line characters
-    fstr[strcspn(fstr, "\n")] = '\0';
-    hexstr_to_bytes(buffer->payload, fstr);
+  LanguageScore try = {
+    .score = 100.0,
+    .decrypted = &xored_msg,
+    .key = &key_data
+  };
 
-    cipher_best.score = 100.0; // Arbitrarily large value
-    single_xor_decrypt(&cipher_best, buffer);
+  for(uint8_t key=0x00; key<0xff; key++) {
+    *try.key->content = key;
+    xor(cipher, *try.key, try.decrypted);
+
+    // Assess XORed message
+    try.score = en_score(try.decrypted->content, try.decrypted->size);
     
-    if(cipher_best.score < file_best.score) {
-      file_best.score = cipher_best.score;
-      memcpy(file_best.text->payload, cipher_best.text->payload, buffer->size);
-      memcpy(file_best.key, cipher_best.key, 1);
-      strncpy(cipher, fstr, cstr_size + 1);
-    }
+    if(try.score < out->score) {
+      out->score = try.score;
+      strncpy(out->decrypted->content, try.decrypted->content, out->decrypted->size);
+      out->decrypted->content[out->decrypted->size] = '\0';
+      // printf("%s, length: %d\n", out->decrypted->content, strlen(out->decrypted->content));
+      *out->key->content = *try.key->content;
+    } 
   }
-
-  strncpy(msg, file_best.text->payload, buffer->size);
-
-
-  deallocate(buffer);
-  deallocate(cipher_best.text);
-  deallocate(file_best.text);
-  free(cipher_best.key);
-  free(file_best.key);
-
-  return 0;
 }
+
+
+// /**
+//  * detect_single_key_xor_from() - Detects a cipher encrypted by a single-byte 
+//  * key XOR from a list of ciphers located in a file
+//  * @fp:         Pointer to file where the list of ciphers is located
+//  * @cipher:     Single-byte XOR-encrypted cipher detected in its hexadecimal representation 
+//  * @msg:        Decrypted message
+//  *  
+//  * Iterates over all 256 XOR-decrypted messages of all XOR-encrypted ciphers from the text file
+//  * and computes the chi-square calculation for all possibilities. The most likely decryption 
+//  * estimation has the lowest score (closest to zero).   
+//  * 
+//  * Return:
+//  * @(int):      Status code
+// */
+// int detect_single_byte_key_xor_legacy(FILE * fp, char * cipher, char * msg) {
+//   // All ciphers present in the text file have 30 bytes and are separated by a newline character
+//   Data * buffer = allocate_bytes(30);    
+//   const int cstr_size = buffer->size * NIBBLE_BYTE; 
+//   char fstr[cstr_size + 1];
+
+//   LanguageScore cipher_best = {
+//     .score = 100.0, // Arbitrarily large value
+//     .text = allocate_bytes(buffer->size),
+//     .key = (byte *) malloc(sizeof(byte *))
+//   };
+
+//   LanguageScore file_best = {
+//     .score = 100.0, // Arbitrarily large value
+//     .text = allocate_bytes(buffer->size),
+//     .key = (byte *) malloc(sizeof(byte *))
+//   };
+
+//   while(fgets(fstr, cstr_size + 1, fp) != NULL) {
+//     // Remove new line characters
+//     fstr[strcspn(fstr, "\n")] = '\0';
+//     hexstr_to_bytes(buffer->content, fstr);
+
+//     cipher_best.score = 100.0; // Arbitrarily large value
+//     single_xor_decrypt(&cipher_best, buffer);
+    
+//     if(cipher_best.score < file_best.score) {
+//       file_best.score = cipher_best.score;
+//       memcpy(file_best.text->content, cipher_best.text->content, buffer->size);
+//       memcpy(file_best.key, cipher_best.key, 1);
+//       strncpy(cipher, fstr, cstr_size + 1);
+//     }
+//   }
+
+//   strncpy(msg, file_best.text->content, buffer->size);
+
+
+//   deallocate(buffer);
+//   deallocate(cipher_best.text);
+//   deallocate(file_best.text);
+//   free(cipher_best.key);
+//   free(file_best.key);
+
+//   return 0;
+// }
