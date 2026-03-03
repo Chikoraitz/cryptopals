@@ -1,50 +1,52 @@
 #include "../../include/set1/break_repeating_key_xor.h"
 
-/**
- * hamming_distance() - Calculates the bit Hamming distance between two strings
- * @string1:  Comparison operand
- * @string2:  Comparison operand
- * @s_len:    String length
- * 
- * Hamming distance is the number of differing bits of two strings.
- * Since the only allowed operation is substitution, the Hammming distance
- * assumes that the strings are of equal length.
- * The differing bits can be calculated by counting the number of 1s of 
- * their XOR product (inequality operation). 
- * 
- * Return:
- * @(int): Hamming distance
-*/
-static int hamming_distance(const char * string1, const char * string2, const int s_len) {
-  // ByteData * byte_stream1 = allocate_bytes(s_len);
-  // ByteData * byte_stream2 = allocate_bytes(s_len);
-  // ByteData * byte_res = allocate_bytes(s_len);
 
-  // int count = 0;
+int hamming_distance(const char * str1, const char * str2) {
+  // Scope variables
+  const size_t str1_size = strlen(str1);  
+  const size_t str2_size = strlen(str2);
+  const size_t result_size = MAX(str1_size, str2_size);
+  unsigned int count = 0;
 
-  // strncpy(byte_stream1->content, string1, s_len);
-  // strncpy(byte_stream2->content, string2, s_len);
+  // Buffers
+  byte result_buffer[result_size];
+  byte str1_buffer[str1_size];
+  byte str2_buffer[str2_size];
 
-  // xor(byte_res, byte_stream1, byte_stream2);
+  // Initialization  
+  ByteData str1_bytes = {
+    .size = str1_size,
+    .content = str1_buffer
+  };
+  strncpy(str1_bytes.content, str1, str1_size);
 
-  // for(int i=0; i < byte_res->size; i++) {
-  //   for(int j=0; j < BIT_BYTE; j++) {
-  //     count += (byte_res->content[i] >> j) & 0x1;
-  //   }
-  // }
+  ByteData str2_bytes = {
+    .size = str2_size,
+    .content = str2_buffer
+  };
+  strncpy(str2_bytes.content, str2, str2_size);
 
-  // deallocate(byte_stream1);
-  // deallocate(byte_stream2);
-  // deallocate(byte_res);
+  memset(result_buffer, 0x0, result_size);
+
+  // Algorithm
+  xor(
+    (ByteData){ .size = str1_size, .content = str1_buffer },
+    (ByteData){ .size = str2_size, .content = str2_buffer },
+    &(ByteData){ .size = result_size, .content = result_buffer }
+  );
+
+  for(int i=0; i < result_size; i++) {
+    for(int j=0; j < BIT_BYTE; j++) {
+      count += (result_buffer[i] >> j) & 0x1;
+    }
+  }
   
-  // return count;
-  return 0;
+  return count;
 }
 
 
 int guess_xor_keysize(const ByteData * ByteData) {
   // The base64-encoded message is compose by 30-character length rows,
   // separated by a newline character
-  char buffer[30];
-  
+  return 0;  
 }

@@ -33,9 +33,7 @@
 #include "../utils/data_conversion.h"
 #include "fixed_xor.h"
 
+int hamming_distance(const char *, const char *);
 int guess_xor_keysize(const ByteData *);
-
-static int hamming_distance(const char *, const char *, const int);
-
 
 #endif

@@ -228,39 +228,23 @@ void validate_challenge5(void ** state) {
 }
 
 
-// /**
-//  * Challenge 6:
-//  * Break Repeating-Key XOR
-// */
-// void validate_challenge6(void ** state) {
-//   (void) state;
+/**
+ * Challenge 6:
+ * Break Repeating-Key XOR
+*/
+void validate_challenge6(void ** state) {
+  (void) state;
+  // Challenge variables
+  FILE * fp;
+  const char * filename = "../../assets/set1/6.txt";
 
-//   // FILE * fp;
-//   // const char * filename = "../../assets/set1/6.txt";
+  if((fp = fopen(filename, "r")) == NULL) {
+    printf("Can't open file: %s\n", filename);
+    assert_true(0x0);
+  }
 
-//   // if((fp = fopen(filename, "r")) == NULL) {
-//   //   printf("Can't open file: %s\n", filename);
-//   //   assert_true(0x0);
-//   // }
-
-//   // // [WIP] Read msg from file and base64 decode it
-//   // decode_base64(decoded_encrypted_msg, base64_encrypted_msg);
-//   // // *****
-
-//   // // [WIP] Change from string to Data data format
-//   // assert_int_equal(edit_distance("this is a test", "wokka wokka!!"), -1);
-//   // assert_int_equal(edit_distance("this is a test", "wokka wokka!!!"), 37);
-
-//   // // [WIP] Guess the XOR key size
-//   // const int keysize = guess_xor_keysize(decoded_encrypted_msg);
-//   // assert_int_equal(keysize, 0x0); 
-
-//   // // [WIP] Break repeating key
-//   // repeating_xor_decrypt(decoded_encrypted_msg, keysize);
-
-//   // assert_string_equal(key, "");
-//   // assert_string_equal(msg, "");
-// }
+  assert_int_equal(hamming_distance("this is a test", "wokka wokka!!!"), 37);
+}
 
 
 int main(void) {
@@ -270,7 +254,7 @@ int main(void) {
     cmocka_unit_test(validate_challenge3),
     cmocka_unit_test(validate_challenge4),
     cmocka_unit_test(validate_challenge5),
-    // cmocka_unit_test(validate_challenge6)
+    cmocka_unit_test(validate_challenge6)
   };
 
   return cmocka_run_group_tests(tests, NULL, NULL);

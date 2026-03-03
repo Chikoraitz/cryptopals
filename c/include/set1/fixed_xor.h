@@ -8,6 +8,8 @@
 
 #include "../utils/data_conversion.h"
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
 void xor(const ByteData, const ByteData, ByteData *); 
 
 #endif
