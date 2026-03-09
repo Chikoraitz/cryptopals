@@ -34,6 +34,6 @@
 #include "fixed_xor.h"
 
 int hamming_distance(const char *, const char *);
-int guess_xor_keysize(const ByteData *);
+int guess_xor_keysize(const ByteStream *);
 
 #endif

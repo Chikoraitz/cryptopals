@@ -10,6 +10,6 @@
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-void xor(const ByteData, const ByteData, ByteData *); 
+void xor(const ByteStream, const ByteStream, ByteStream *); 
 
 #endif

@@ -52,38 +52,38 @@ static inline const char hex_value2char(byte b) {
 }
 
 
-void hexstr_to_bytes(const char in[], byte out[]) {
+void hexstr_to_bytes(const char * in, ByteStream * out) {
   int out_i = 0;
 
   for(int i=0; i<strlen(in); i++) {    
     // Most significant nibble
     if(i % NIBBLE_BYTE == MSN) {
-      out[out_i] = (hex_char2value(in[i]) & 0xf);
-      out[out_i] <<= BIT_NIBBLE; 
+      out->content[out_i] = (hex_char2value(in[i]) & 0xf);
+      out->content[out_i] <<= BIT_NIBBLE; 
     }
     // Least significant nibble
     else {
-      out[out_i] |= (hex_char2value(in[i]) & 0xf);
+      out->content[out_i] |= (hex_char2value(in[i]) & 0xf);
       out_i++;
     }
   }
 
-  for(int i=out_i; i<strlen(out); i++) out[out_i] = 0x0;
+  for(int i=out_i; i<out->size; i++) out->content[out_i] = 0x0;
 }
 
 
-void bytes_to_hexstr(const byte * in, char * out, const size_t in_size) {
+void bytes_to_hexstr(const ByteStream in, char * out) {
   int in_i = 0;
-  const size_t out_size = in_size * NIBBLE_BYTE;
+  const size_t out_size = in.size * NIBBLE_BYTE;
 
   for(int i=0; i<out_size; i++) {
     // Most significant nibble
     if(i % NIBBLE_BYTE == MSN) {
-      out[i] = hex_value2char(in[in_i] >> BIT_NIBBLE);
+      out[i] = hex_value2char(in.content[in_i] >> BIT_NIBBLE);
     }
     // Least significant nibble
     else {
-      out[i] = hex_value2char(in[in_i] & 0xf);
+      out[i] = hex_value2char(in.content[in_i] & 0xf);
       in_i++;
     }
   }

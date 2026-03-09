@@ -47,12 +47,12 @@
 */
 typedef struct SPlaintextScore {
   double score;
-  ByteData * decrypted;
-  ByteData * key;
+  ByteStream * decrypted;
+  ByteStream * key;
 } LanguageScore;
 
 
-void single_xor_decrypt(const ByteData, LanguageScore *);
+void single_xor_decrypt(const ByteStream, LanguageScore *);
 int detect_single_byte_key_xor(FILE *, char *, char *);
 double en_score(const char *, const int);
 

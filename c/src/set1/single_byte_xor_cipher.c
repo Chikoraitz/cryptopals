@@ -83,7 +83,7 @@ double en_score(const char * plaintext_msg, const int text_len) {
 }
 
 
-void single_xor_decrypt(const ByteData cipher, LanguageScore * out) {
+void single_xor_decrypt(const ByteStream cipher, LanguageScore * out) {
   // Scope variables
   enum { MSG_BUFFER_SIZE = 200 };
   double score;
@@ -95,8 +95,8 @@ void single_xor_decrypt(const ByteData cipher, LanguageScore * out) {
   // Initializations
   LanguageScore try = {
     .score = 100.0,
-    .decrypted = &(ByteData) { .size = out->decrypted->size, .content = try_text },
-    .key = &(ByteData) { .size = 1, .content = key_buffer },
+    .decrypted = &(ByteStream) { .size = out->decrypted->size, .content = try_text },
+    .key = &(ByteStream) { .size = 1, .content = key_buffer },
   };
 
   for(uint8_t key=0x00; key<0xff; key++) {

@@ -14,13 +14,13 @@ int hamming_distance(const char * str1, const char * str2) {
   byte str2_buffer[str2_size];
 
   // Initialization  
-  ByteData str1_bytes = {
+  ByteStream str1_bytes = {
     .size = str1_size,
     .content = str1_buffer
   };
   strncpy(str1_bytes.content, str1, str1_size);
 
-  ByteData str2_bytes = {
+  ByteStream str2_bytes = {
     .size = str2_size,
     .content = str2_buffer
   };
@@ -28,11 +28,11 @@ int hamming_distance(const char * str1, const char * str2) {
 
   memset(result_buffer, 0x0, result_size);
 
-  // Algorithm
+  // Algorithm: XOR + Count the number of 1s of result
   xor(
-    (ByteData){ .size = str1_size, .content = str1_buffer },
-    (ByteData){ .size = str2_size, .content = str2_buffer },
-    &(ByteData){ .size = result_size, .content = result_buffer }
+    (ByteStream){ .size = str1_size, .content = str1_buffer },
+    (ByteStream){ .size = str2_size, .content = str2_buffer },
+    &(ByteStream){ .size = result_size, .content = result_buffer }
   );
 
   for(int i=0; i < result_size; i++) {
@@ -45,7 +45,7 @@ int hamming_distance(const char * str1, const char * str2) {
 }
 
 
-int guess_xor_keysize(const ByteData * ByteData) {
+int guess_xor_keysize(const ByteStream * ByteStream) {
   // The base64-encoded message is compose by 30-character length rows,
   // separated by a newline character
   return 0;  

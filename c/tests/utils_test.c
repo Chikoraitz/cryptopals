@@ -10,11 +10,11 @@ void validate_hexstr_to_bytes_conversion(void **state) {
   (void) state; // Unused
 
   byte test1[1];
-  hexstr_to_bytes("a2", test1);
+  hexstr_to_bytes("a2", &(ByteStream) { .content = test1, .size = 1});
   assert_int_equal(*test1, 0xa2);
 
   byte test2[5];
-  hexstr_to_bytes("139ac7ffd5", test2);
+  hexstr_to_bytes("139ac7ffd5", &(ByteStream) { .content = test2, .size = 5});
   assert_int_equal(test2[0], 0x13);
   assert_int_equal(test2[1], 0x9a);
   assert_int_equal(test2[2], 0xc7);

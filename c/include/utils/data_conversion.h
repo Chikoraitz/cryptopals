@@ -32,39 +32,13 @@
 enum { MSN = 0, LSN = 1 };
 
 typedef unsigned char byte;
-typedef struct SByteData {
+typedef struct SByteStream {
   size_t size;
   byte * content;
-} ByteData;
+} ByteStream;
 
 
-void hexstr_to_bytes(const char *, byte *);
-void bytes_to_hexstr(const byte *, char *, const size_t);
-
-
-/**
- * 
-*/
-static inline ByteData * allocate_bytes(size_t size) {
-  ByteData * d = calloc(sizeof(ByteData) + size, sizeof(byte));
-  
-  if(d == NULL) {
-    printf("Unable to allocate memory...");
-    exit(EXIT_FAILURE);
-  }
-
-  memcpy(d, &(ByteData const){.size = size}, sizeof(ByteData));
-
-  return d;
-}
-
-
-/**
- * 
-*/
-static inline void deallocate(ByteData * data) {
-  free(data);
-}
-
+void hexstr_to_bytes(const char *, ByteStream *);
+void bytes_to_hexstr(const ByteStream, char *);
 
 #endif

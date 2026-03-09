@@ -19,7 +19,15 @@ void validate_challenge1(void ** state) {
 
   char b64_buffer[BUFFER_SIZE];
   byte byte_buffer[BUFFER_SIZE] = {0x0};
-  char plaintext_buffer[BUFFER_SIZE];
+  byte plaintext_buffer[BUFFER_SIZE] = {0x0};
+  
+  ByteStream byte_stream = {
+    .content = byte_buffer
+  };
+
+  ByteStream plaintext = {
+    .content = plaintext_buffer
+  };
 
   const char * test_cases_hexstr[] = {
     "414243", "41424344", "4546474849", "4a4b4c4d4e4f",
@@ -38,12 +46,13 @@ void validate_challenge1(void ** state) {
 
   for(int i=0; i < N_TESTS; i++) {
     // Base64 encoding tests
-    hexstr_to_bytes(test_cases_hexstr[i], byte_buffer);
-    bytes_to_base64(byte_buffer, b64_buffer, strlen(test_cases_hexstr[i]) / NIBBLE_BYTE);
+    byte_stream.size = strlen(test_cases_hexstr[i]) / NIBBLE_BYTE;
+    hexstr_to_bytes(test_cases_hexstr[i], &byte_stream);
+    bytes_to_base64(&byte_stream, b64_buffer);
     assert_string_equal(b64_buffer, test_cases_b64[i]);
 
-    // base64_to_bytes(b64_buffer, plaintext_buffer);
-    // assert_string_equal(plaintext_buffer, test_cases_plaintext[i]);
+    base64_to_bytes(b64_buffer, &plaintext);
+    assert_string_equal(plaintext.content, test_cases_plaintext[i]);
   }
 }
 
@@ -65,17 +74,28 @@ void validate_challenge2(void ** state) {
   byte xor_bytes_op2[BUFFER_SIZE] = {0x0};
   byte xor_bytes_result[BUFFER_SIZE] = {0x0};
 
+  ByteStream xor_op1 = {
+    .content = xor_bytes_op1,
+    .size = BYTE_OPERAND_SIZE
+  };
+
+  ByteStream xor_op2 = {
+    .content = xor_bytes_op2,
+    .size = BYTE_OPERAND_SIZE
+  };
+
+  ByteStream xor_result = {
+    .content = xor_bytes_result,
+    .size = BYTE_OPERAND_SIZE
+  };
+
   // Algorithm
-  hexstr_to_bytes(xor_hexstr1, xor_bytes_op1);
-  hexstr_to_bytes(xor_hexstr2, xor_bytes_op2);
+  hexstr_to_bytes(xor_hexstr1, &xor_op1);
+  hexstr_to_bytes(xor_hexstr2, &xor_op2);
 
-  xor(
-    (ByteData) { .size = BUFFER_SIZE, .content = xor_bytes_op1 },
-    (ByteData) { .size = BUFFER_SIZE, .content = xor_bytes_op2 },
-    &(ByteData) { .size = BUFFER_SIZE, .content = xor_bytes_result }
-  );
+  xor(xor_op1, xor_op2, &xor_result);
 
-  bytes_to_hexstr(xor_bytes_result, hexstr_result, BYTE_OPERAND_SIZE);
+  bytes_to_hexstr(xor_result, hexstr_result);
   assert_string_equal(hexstr_result, "746865206b696420646f6e277420706c6179");
 }
 
@@ -95,15 +115,15 @@ void validate_challenge3(void ** state) {
   char plaintext_buffer[MSG_BUFFER_SIZE];
 
   // Initializations
-  const ByteData cipherbytes = {
+  ByteStream cipher_stream = {
     .size = strlen(cipher_hexstr) / NIBBLE_BYTE,
     .content = cipher_bytes_buffer
   };
 
   LanguageScore best = {
     .score = 300.0, // Arbitrarily large value
-    .decrypted = &(ByteData){ .size = cipherbytes.size, .content = plaintext_buffer},
-    .key = &(ByteData){ .size = 1, .content = key_buffer}
+    .decrypted = &(ByteStream){ .size = cipher_stream.size, .content = plaintext_buffer},
+    .key = &(ByteStream){ .size = 1, .content = key_buffer}
   };
 
   assert_double_equal(en_score("aaaaAAAA", 8), 86.155, 0.1);
@@ -112,8 +132,8 @@ void validate_challenge3(void ** state) {
   assert_double_equal(en_score("Timed voice share led his widen noisy young", 43), 18.30, 0.1);
   assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large.", 127), 39.33, 0.1);
 
-  hexstr_to_bytes(cipher_hexstr, cipherbytes.content);
-  single_xor_decrypt(cipherbytes, &best);
+  hexstr_to_bytes(cipher_hexstr, &cipher_stream);
+  single_xor_decrypt(cipher_stream, &best);
 
   assert_int_equal(*best.key->content, 0x58);
   assert_string_equal(best.decrypted->content, "Cooking MC's like a pound of bacon");
@@ -145,21 +165,21 @@ void validate_challenge4(void ** state) {
   FILE * fp; 
   const char * filename = "../../assets/set1/4.txt";
 
-  const ByteData cipherbytes = {
+  ByteStream cipher_stream = {
     .size = CIPHER_SIZE,
     .content = cipher_bytes_buffer
   };
 
   LanguageScore cipher_best = {
     .score = 300.0,
-    .decrypted = &(ByteData){ .size = CIPHER_SIZE, .content = cipher_plaintext_buffer },
-    .key = &(ByteData){ .size = 1, .content = cipher_key_buffer }
+    .decrypted = &(ByteStream){ .size = CIPHER_SIZE, .content = cipher_plaintext_buffer },
+    .key = &(ByteStream){ .size = 1, .content = cipher_key_buffer }
   };
 
   LanguageScore file_best = {
     .score = 300.0,
-    .decrypted = &(ByteData){ .size = CIPHER_SIZE, .content = file_plaintext_buffer },
-    .key = &(ByteData){ .size = 1, .content = file_key_buffer }
+    .decrypted = &(ByteStream){ .size = CIPHER_SIZE, .content = file_plaintext_buffer },
+    .key = &(ByteStream){ .size = 1, .content = file_key_buffer }
   };
 
   // Algorithm
@@ -171,10 +191,10 @@ void validate_challenge4(void ** state) {
     while(fgets(fstr, HEXSTR_BUFFER_SIZE, fp) != NULL) {
       // Replace new line characters with string-terminal characters
       fstr[strcspn(fstr, "\n")] = '\0';
-      hexstr_to_bytes(fstr, cipherbytes.content);
+      hexstr_to_bytes(fstr, &cipher_stream);
       
       cipher_best.score = 300.0;
-      single_xor_decrypt(cipherbytes, &cipher_best);
+      single_xor_decrypt(cipher_stream, &cipher_best);
       
       if(cipher_best.score < file_best.score) {
         file_best.score = cipher_best.score;
@@ -213,17 +233,22 @@ void validate_challenge5(void ** state) {
   byte key_buffer[BUFFER_SIZE] = {0x0};
   byte cipher_bytes_buffer[BUFFER_SIZE] = {0x0};
 
+  ByteStream text_stream = {
+    .content = cipher_bytes_buffer,
+    .size = plaintext_size
+  };
+
   // Algorithm  
   strncpy(plaintext_buffer, plaintext, plaintext_size);
   strncpy(key_buffer, key, key_size);
 
   xor(
-    (ByteData){ .size = plaintext_size, .content = plaintext_buffer },
-    (ByteData){ .size = key_size, .content = key_buffer },
-    &(ByteData){ .size = plaintext_size, .content = cipher_bytes_buffer }
+    (ByteStream){ .size = plaintext_size, .content = plaintext_buffer },
+    (ByteStream){ .size = key_size, .content = key_buffer },
+    &text_stream
   );
 
-  bytes_to_hexstr(cipher_bytes_buffer, cipher_hexstr, plaintext_size);
+  bytes_to_hexstr(text_stream, cipher_hexstr);
   assert_string_equal(cipher_hexstr, result_hexstr);
 }
 
