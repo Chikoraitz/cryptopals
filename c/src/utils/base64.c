@@ -1,4 +1,4 @@
-#include "../../include/set1/base64.h"
+#include "../../include/utils/base64.h"
 
 const char base64_lookup_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const char base64_padding = '=';
@@ -81,17 +81,17 @@ static inline int base64_decode_block(char * in_b64_block, byte * out, int pos) 
 }
 
 
-void bytes_to_base64(const ByteStream * in, char * result_buffer) {
+void bytes_to_base64(const ByteStream in, char * result_buffer) {
   byte b_block[BINARY_BLOCK_SIZE];
   char b64_block[BASE64_BLOCK_SIZE];
 
   int b_block_i; 
   int pos = 0;
 
-  for(int i=0; i<in->size; i++) {
+  for(int i=0; i<in.size; i++) {
     // Fill the binary buffer block (size 3)
     b_block_i = i % BINARY_BLOCK_SIZE;
-    b_block[b_block_i] = in->content[i];
+    b_block[b_block_i] = in.content[i];
 
     // When filled, encode to base64 schema
     if(b_block_i == BINARY_BLOCK_SIZE - 1) {

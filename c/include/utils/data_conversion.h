@@ -22,11 +22,11 @@
 #define BIT_NIBBLE    4
 
 /**
- * define BIT_BYTE - Number of bits in a byte
+ * define BITS_IN__BYTE - Number of bits in a byte
  * 
  * A byte is composed by 8 bits.
 */
-#define BIT_BYTE      8
+#define BITS_IN__BYTE      8
 
 // Most/Least Significant Nibble
 enum { MSN = 0, LSN = 1 };

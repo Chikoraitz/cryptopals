@@ -1,36 +1,27 @@
-#[[ Utility Functions ]]
-
-list(APPEND HEADER_FILES
-      "${CMAKE_SOURCE_DIR}/include/utils/data_conversion.h")
-
-list(APPEND SRC_FILES
-      "${CMAKE_CURRENT_SOURCE_DIR}/utils/data_conversion.c")
-
-
-#[[ Set 1 Challenges ]]
+#[[ Library Functions ]]
 
 list(APPEND HEADER_FILES 
-      "${CMAKE_SOURCE_DIR}/include/set1/base64.h"
-      "${CMAKE_SOURCE_DIR}/include/set1/fixed_xor.h"
-      "${CMAKE_SOURCE_DIR}/include/set1/single_byte_xor_cipher.h"
-      "${CMAKE_SOURCE_DIR}/include/set1/break_repeating_key_xor.h")
+      "${CMAKE_SOURCE_DIR}/include/utils/base64.h"
+      "${CMAKE_SOURCE_DIR}/include/utils/data_conversion.h"
+      "${CMAKE_SOURCE_DIR}/include/crypto/xor.h"
+      "${CMAKE_SOURCE_DIR}/include/analysis/en_score.h"
+      "${CMAKE_SOURCE_DIR}/include/analysis/hamming.h")
 
 list(APPEND SRC_FILES 
-      "${CMAKE_CURRENT_SOURCE_DIR}/set1/base64.c"
-      "${CMAKE_CURRENT_SOURCE_DIR}/set1/fixed_xor.c"
-      "${CMAKE_CURRENT_SOURCE_DIR}/set1/single_byte_xor_cipher.c"
-      "${CMAKE_CURRENT_SOURCE_DIR}/set1/break_repeating_key_xor.c")
+      "${CMAKE_CURRENT_SOURCE_DIR}/utils/base64.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/utils/data_conversion.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/crypto/xor.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/analysis/en_score.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/analysis/hamming.c")
 
 
-#[[ Set 2 Challenges ]]
-#[[ Set 3 Challenges ]]
-#[[ Set 4 Challenges ]]
-#[[ Set 5 Challenges ]]
-#[[ Set 6 Challenges ]]
-#[[ Set 7 Challenges ]]
-#[[ Set 8 Challenges ]]
+#[[ Challenges ]]
+list(APPEND HEADER_FILES 
+      "${CMAKE_SOURCE_DIR}/include/challenges/set1.h")
+
+list(APPEND SRC_FILES 
+      "${CMAKE_CURRENT_SOURCE_DIR}/challenges/set1.c")
 
 
 add_library(cryptopals_lib ${SRC_FILES} ${HEADER_FILES})
-target_include_directories(cryptopals_lib PRIVATE "${CMAKE_SOURCE_DIR}/include/utils")
-target_include_directories(cryptopals_lib PRIVATE "${CMAKE_SOURCE_DIR}/include/set1")
+target_include_directories(cryptopals_lib PRIVATE "${CMAKE_SOURCE_DIR}/include/challenges")

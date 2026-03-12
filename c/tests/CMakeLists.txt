@@ -19,10 +19,21 @@ target_include_directories(utils_test PRIVATE "${CMOCKA_INCLUDE_DIRS}" "${CMAKE_
 add_cmocka_test_environment(utils_test)
 
 
+#[[ == Analysis Tests == ]]
+
+add_cmocka_test(analysis_test
+                SOURCES analysis_test.c "${CMAKE_SOURCE_DIR}/include/analysis"
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS}
+                LINK_LIBRARIES "${CMOCKA_LIBRARIES}" cryptopals_lib)
+
+target_include_directories(analysis_test PRIVATE "${CMOCKA_INCLUDE_DIRS}" "${CMAKE_SOURCE_DIR}/include/analysis")
+add_cmocka_test_environment(analysis_test)
+
+
 #[[ == Set 1 Challenges Tests == ]]
 
 add_cmocka_test(set1_test
-                SOURCES set1_test.c "${CMAKE_SOURCE_DIR}/include/set1"
+                SOURCES set1_test.c "${CMAKE_SOURCE_DIR}/include/challenges"
                 COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS}
                 LINK_LIBRARIES "${CMOCKA_LIBRARIES}" cryptopals_lib)
 

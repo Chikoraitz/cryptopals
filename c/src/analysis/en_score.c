@@ -1,4 +1,4 @@
-#include "../../include/set1/single_byte_xor_cipher.h"
+#include "../../include/analysis/en_score.h"
 
 // Source: https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html
 const double freq_expected[] = {
@@ -80,38 +80,5 @@ double en_score(const char * plaintext_msg, const int text_len) {
   }
 
   return chi_test;
-}
-
-
-void single_xor_decrypt(const ByteStream cipher, LanguageScore * out) {
-  // Scope variables
-  enum { MSG_BUFFER_SIZE = 200 };
-  double score;
-  
-  // Buffers
-  char try_text[MSG_BUFFER_SIZE];
-  byte key_buffer[1] = {0x0};
-
-  // Initializations
-  LanguageScore try = {
-    .score = 100.0,
-    .decrypted = &(ByteStream) { .size = out->decrypted->size, .content = try_text },
-    .key = &(ByteStream) { .size = 1, .content = key_buffer },
-  };
-
-  for(uint8_t key=0x00; key<0xff; key++) {
-    *try.key->content = key;
-    xor(cipher, *try.key, try.decrypted);
-
-    // Assess XORed message
-    try.score = en_score(try.decrypted->content, try.decrypted->size);
-    
-    if(try.score < out->score) {
-      out->score = try.score;
-      strncpy(out->decrypted->content, try.decrypted->content, out->decrypted->size);
-      out->decrypted->content[out->decrypted->size] = '\0';
-      *out->key->content = *try.key->content;
-    } 
-  }
 }
 
