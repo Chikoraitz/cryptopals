@@ -40,7 +40,7 @@ const double freq_expected[] = {
  * Return: 
  * @chi_test: Chi-square calculation
 */
-double en_score(const char * plaintext_msg, const int text_len) {
+double en_score(const char * plaintext_msg, const int text_len, const float threshold) {
   int char_freq[ALPHABET_SIZE + 1] = { 0 };
   int alphabetic_len;
   double chi_test, delta, freq_exp;
@@ -67,7 +67,7 @@ double en_score(const char * plaintext_msg, const int text_len) {
 
   // If the ratio of non-alphabetic characters is higher than
   // a certain threshold, it is unlikely to be an English sentence
-  if((char_freq[ALPHABET_SIZE] / (double) text_len) > 0.3) return 100.0;
+  if((char_freq[ALPHABET_SIZE] / (double) text_len) > threshold) return 500.0;
 
   chi_test = 0.0;
   alphabetic_len = text_len - char_freq[ALPHABET_SIZE];

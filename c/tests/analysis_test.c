@@ -6,11 +6,11 @@
 
 void validate_en_score(void **state) {
   (void) state;
-  assert_double_equal(en_score("aaaaAAAA", 8), 86.155, 0.1);
-  assert_double_equal(en_score("abab ABAB", 9), 112.06, 0.1);
-  assert_double_equal(en_score("aBe abE ABe AbE", 15), 79.99, 0.1);
-  assert_double_equal(en_score("Timed voice share led his widen noisy young", 43), 18.30, 0.1);
-  assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large.", 127), 39.33, 0.1);
+  assert_double_equal(en_score("aaaaAAAA", 8, 0.3), 86.155, 0.1);
+  assert_double_equal(en_score("abab ABAB", 9, 0.3), 112.06, 0.1);
+  assert_double_equal(en_score("aBe abE ABe AbE", 15, 0.3), 79.99, 0.1);
+  assert_double_equal(en_score("Timed voice share led his widen noisy young", 43, 0.3), 18.30, 0.1);
+  assert_double_equal(en_score("A chi-squared test is a statistical hypothesis test used in the analysis of contingency tables when the sample sizes are large.", 127, 0.3), 39.33, 0.1);
 }
 
 

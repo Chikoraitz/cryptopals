@@ -85,7 +85,7 @@ void validate_challenge6(void ** state) {
   char key[100];
   
   c6(filepath, key);
-  assert_string_equal(key, "Hello");
+  assert_string_equal(key, "Terminator X: Bring the noise");
 }
 
 

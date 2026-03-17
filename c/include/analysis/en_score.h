@@ -27,7 +27,7 @@ typedef struct SPlaintextScore {
 } LanguageScore;
 
 
-double en_score(const char *, const int);
+double en_score(const char *, const int, const float);
 
 /** @single_byte_xor_cipher.c */
 extern const double freq_expected[];
