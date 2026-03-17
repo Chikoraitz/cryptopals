@@ -221,3 +221,22 @@ void c6(const char * filepath, char * key_buffer) {
   key_buffer[keysize] = '\0';
   fclose(fp);
 }
+
+
+void c7(const char * filepath, char * plaintext_buffer) {
+  char cipher_buffer[2000];
+  ByteStream ciphertext = {
+    .size = 2000,
+    .content = cipher_buffer
+  };
+  
+  ByteStream plaintext = {
+    .size = 2000,
+    .content = plaintext_buffer
+  };
+
+  aes_decrypt(AES128_DEFAULT, ciphertext, &plaintext, ECB);
+
+  // memcpy(plaintext_buffer, "Hello", 5);
+  // plaintext_buffer[5] = 0;
+}

@@ -83,9 +83,23 @@ void validate_challenge6(void ** state) {
   (void) state;
   const char * filepath = "../../assets/set1/6.txt";
   char key[100];
-  
+
   c6(filepath, key);
   assert_string_equal(key, "Terminator X: Bring the noise");
+}
+
+
+/**
+ * Challenge 7:
+ * AES in ECB mode
+ */
+void validate_challenge7(void ** state) {
+  (void) state;
+  const char * filepath = "../../assets/set1/7.txt";
+  char plaintext[2000];
+
+  c7(filepath, plaintext);
+  assert_string_equal(plaintext, "My plaintext...");
 }
 
 
@@ -96,7 +110,8 @@ int main(void) {
     cmocka_unit_test(validate_challenge3),
     cmocka_unit_test(validate_challenge4),
     cmocka_unit_test(validate_challenge5),
-    cmocka_unit_test(validate_challenge6)
+    cmocka_unit_test(validate_challenge6),
+    cmocka_unit_test(validate_challenge7)
   };
 
   return cmocka_run_group_tests(tests, NULL, NULL);
