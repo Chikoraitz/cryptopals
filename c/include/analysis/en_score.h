@@ -26,6 +26,7 @@ typedef struct SPlaintextScore {
   ByteStream * key;
 } LanguageScore;
 
+#define LANGUAGE_SCORE(msg_buf, msg_buf_size, key_buf, key_buf_size) { .score = 300, .decrypted = &(ByteStream) BYTESTREAM(msg_buf, msg_buf_size), .key = &(ByteStream) BYTESTREAM(key_buf, key_buf_size) }
 
 double en_score(const char *, const int, const float);
 

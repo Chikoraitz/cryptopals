@@ -19,14 +19,14 @@
  * Hexadecimal characters represent values between the range of 0 and 15 -
  * we need 4 bits to represent all values in this range.
 */
-#define BIT_NIBBLE    4
+#define BIT_NIBBLE 4
 
 /**
  * define BITS_IN__BYTE - Number of bits in a byte
  * 
  * A byte is composed by 8 bits.
 */
-#define BITS_IN__BYTE      8
+#define BITS_IN__BYTE 8
 
 // Most/Least Significant Nibble
 enum { MSN = 0, LSN = 1 };
@@ -36,6 +36,8 @@ typedef struct SByteStream {
   size_t size;
   byte * content;
 } ByteStream;
+
+#define BYTESTREAM(buf, s) { .size = s, .content = buf }
 
 
 void hexstr_to_bytes(const char *, ByteStream *);

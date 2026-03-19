@@ -7,20 +7,10 @@ void xor(const ByteStream in_op1, const ByteStream in_op2, ByteStream * out) {
 }
 
 
-void single_xor_decrypt(const ByteStream cipher, LanguageScore * out, const float threshold) {
-  // Scope variables
-  enum { MSG_BUFFER_SIZE = 200 };
-  
-  // Buffers
-  char try_text[MSG_BUFFER_SIZE];
+void single_xor_decrypt(const ByteStream cipher, LanguageScore * out, const float threshold) {  
+  char try_text[out->decrypted->size];
   byte key_buffer[1] = {0x0};
-
-  // Initializations
-  LanguageScore try = {
-    .score = 100.0,
-    .decrypted = &(ByteStream) { .size = out->decrypted->size, .content = try_text },
-    .key = &(ByteStream) { .size = 1, .content = key_buffer },
-  };
+  LanguageScore try = LANGUAGE_SCORE(try_text, out->decrypted->size, key_buffer, 1);
 
   for(uint8_t key=0x00; key<0xff; key++) {
     *try.key->content = key;
@@ -36,43 +26,6 @@ void single_xor_decrypt(const ByteStream cipher, LanguageScore * out, const floa
       *out->key->content = key;
     }
   }
-}
-
-
-void single_xor_decrypt_debug(const ByteStream cipher, byte real_key, float threshold) {
-  // Scope variables
-  enum { MSG_BUFFER_SIZE = 200 };
-  double score = 1000.0;
-  
-  // Buffers
-  char try_text[MSG_BUFFER_SIZE];
-  byte key_buffer[1] = {0x0};
-
-  // Initializations
-  LanguageScore try = {
-    .decrypted = &(ByteStream) { .size = MSG_BUFFER_SIZE, .content = try_text },
-    .key = &(ByteStream) { .size = 1, .content = key_buffer },
-  };
-
-  printf("\n=== START DEBUG: Key = 0x%2x", real_key);
-  for(uint8_t key=0x00; key<0xff; key++) {
-    *try.key->content = key;
-    xor(cipher, *try.key, try.decrypted);
-
-    // Assess XORed message
-    try.score = en_score(try.decrypted->content, try.decrypted->size, threshold);
-    // printf("\nKey: 0x%2x, Score: %2.1f | Decrypted msg: %s", key, try.score, try.decrypted->content);
-
-    if(key == real_key) {
-      printf("\nReal key has score: %2.1f", try.score);
-    }
-
-    if(try.score < score) {
-      printf("\nLast best score: %2.1f, New best score: %2.1f | 0x%2x", score, try.score, *try.key->content);
-      score = try.score;
-    } 
-  }
-  printf("\n=== END DEBUG\n");
 }
 
 

@@ -1,11 +1,9 @@
 #include "../../include/challenges/set1.h"
 
 void c1(const char * hexstr_in, char * b64_result) {
-  byte buffer[100];
-  ByteStream bs = {
-    .size = strlen(hexstr_in) / NIBBLE_BYTE,
-    .content = buffer
-  };
+  size_t buffer_size = strlen(hexstr_in) / NIBBLE_BYTE;
+  byte buffer[buffer_size];
+  ByteStream bs = BYTESTREAM(buffer, buffer_size);
 
   hexstr_to_bytes(hexstr_in, &bs);
   bytes_to_base64(bs, b64_result);
@@ -13,27 +11,15 @@ void c1(const char * hexstr_in, char * b64_result) {
 
 
 void c2(const char * xor_hexstr1, const char * xor_hexstr2, char * hexstr_result) {
-  enum { BUFFER_SIZE = 50, BYTE_OPERAND_SIZE = 18 };
+  enum { BYTE_OPERAND_SIZE = 18 };
   
-  // Buffers
-  byte xor_bytes_op1[BUFFER_SIZE] = {0x0};
-  byte xor_bytes_op2[BUFFER_SIZE] = {0x0};
-  byte xor_bytes_result[BUFFER_SIZE] = {0x0};
+  byte xor_bytes_op1[BYTE_OPERAND_SIZE] = {0x0};
+  byte xor_bytes_op2[BYTE_OPERAND_SIZE] = {0x0};
+  byte xor_bytes_result[BYTE_OPERAND_SIZE] = {0x0};
 
-  ByteStream xor_op1 = {
-    .content = xor_bytes_op1,
-    .size = BYTE_OPERAND_SIZE
-  };
-
-  ByteStream xor_op2 = {
-    .content = xor_bytes_op2,
-    .size = BYTE_OPERAND_SIZE
-  };
-
-  ByteStream xor_result = {
-    .content = xor_bytes_result,
-    .size = BYTE_OPERAND_SIZE
-  };
+  ByteStream xor_op1 = BYTESTREAM(xor_bytes_op1, BYTE_OPERAND_SIZE);
+  ByteStream xor_op2 = BYTESTREAM(xor_bytes_op2, BYTE_OPERAND_SIZE);
+  ByteStream xor_result = BYTESTREAM(xor_bytes_result, BYTE_OPERAND_SIZE);
 
   hexstr_to_bytes(xor_hexstr1, &xor_op1);
   hexstr_to_bytes(xor_hexstr2, &xor_op2);
@@ -42,25 +28,21 @@ void c2(const char * xor_hexstr1, const char * xor_hexstr2, char * hexstr_result
 }
 
 
-void c3(const char * cipher_hexstr, char * plaintext) {
-  enum { MSG_BUFFER_SIZE = 200 };  
-  byte cipher_bytes_buffer[100] = {0x0}, key_buffer[1] = {0x0};
+void c3(const char * cipher_hexstr, char * msg) {
+  enum { MSG_BUFFER_SIZE = 200 };
 
-  // Initializations
-  ByteStream cipher_stream = {
-    .size = strlen(cipher_hexstr) / NIBBLE_BYTE,
-    .content = cipher_bytes_buffer
-  };
-
-  LanguageScore best = {
-    .score = 300.0, // Arbitrarily large value
-    .decrypted = &(ByteStream){ .size = cipher_stream.size, .content = plaintext },
-    .key = &(ByteStream){ .size = 1, .content = key_buffer}
-  };
+  size_t cipher_size = strlen(cipher_hexstr) / NIBBLE_BYTE;
+  byte cipher_bytes_buffer[cipher_size], plaintext_bytes_buffer[cipher_size];
+  byte key_buffer[1] = {0x0};
+  ByteStream cipher_stream = BYTESTREAM(cipher_bytes_buffer, cipher_size);
+  LanguageScore best = LANGUAGE_SCORE(plaintext_bytes_buffer, cipher_size, key_buffer, 1);
 
   //*best.key->content: 0x58
   hexstr_to_bytes(cipher_hexstr, &cipher_stream);
   single_xor_decrypt(cipher_stream, &best, 0.3);
+
+  memcpy(msg, plaintext_bytes_buffer, cipher_size);
+  msg[cipher_size] = 0;
 }
 
 
@@ -77,24 +59,10 @@ void c4(const char * filepath, char * cipher_hexstr) {
   byte file_bytes[CIPHER_SIZE] = {0x0};           // Best score text for particular cipher in file
   byte cipher_key_buffer[1] = {0x0}, file_key_buffer[1] = {0x0};
 
-  // Initializations
   FILE * fp; 
-  ByteStream cipher_stream = {
-    .size = CIPHER_SIZE,
-    .content = cipher_bytes_buffer
-  };
-
-  LanguageScore cipher_best = {
-    .score = 300.0,
-    .decrypted = &(ByteStream){ .size = CIPHER_SIZE, .content = cipher_plaintext_buffer },
-    .key = &(ByteStream){ .size = 1, .content = cipher_key_buffer }
-  };
-
-  LanguageScore file_best = {
-    .score = 300.0,
-    .decrypted = &(ByteStream){ .size = CIPHER_SIZE, .content = file_plaintext_buffer },
-    .key = &(ByteStream){ .size = 1, .content = file_key_buffer }
-  };
+  ByteStream cipher_stream = BYTESTREAM(cipher_bytes_buffer, CIPHER_SIZE);
+  LanguageScore cipher_best = LANGUAGE_SCORE(cipher_plaintext_buffer, CIPHER_SIZE, cipher_key_buffer, 1);
+  LanguageScore file_best = LANGUAGE_SCORE(file_plaintext_buffer, CIPHER_SIZE, file_key_buffer, 1);
 
   // Algorithm
   if((fp = fopen(filepath, "r")) == NULL) {
@@ -127,17 +95,13 @@ void c4(const char * filepath, char * cipher_hexstr) {
 void c5(const char * plaintext, const char * key, char * cipher_hexstr) {
   enum { BUFFER_SIZE = 100 };
   const uint8_t key_size = strlen(key);
-  const uint8_t plaintext_size = strlen(plaintext);
+  const size_t plaintext_size = strlen(plaintext);
   
   // Buffer
   byte plaintext_buffer[BUFFER_SIZE] = {0x0};
   byte key_buffer[BUFFER_SIZE] = {0x0};
-  byte cipher_bytes_buffer[BUFFER_SIZE] = {0x0};
-
-  ByteStream text_stream = {
-    .content = cipher_bytes_buffer,
-    .size = plaintext_size
-  };
+  byte cipher_bytes_buffer[plaintext_size];
+  ByteStream text_stream = BYTESTREAM(cipher_bytes_buffer, plaintext_size);
 
   // Algorithm  
   strncpy(plaintext_buffer, plaintext, plaintext_size);
@@ -225,18 +189,8 @@ void c6(const char * filepath, char * key_buffer) {
 
 void c7(const char * filepath, char * plaintext_buffer) {
   char cipher_buffer[2000];
-  ByteStream ciphertext = {
-    .size = 2000,
-    .content = cipher_buffer
-  };
-  
-  ByteStream plaintext = {
-    .size = 2000,
-    .content = plaintext_buffer
-  };
+  ByteStream ciphertext = BYTESTREAM(cipher_buffer, 2000);
+  ByteStream plaintext = BYTESTREAM(plaintext_buffer, 2000);
 
-  aes_decrypt(AES128_DEFAULT, ciphertext, &plaintext, ECB);
-
-  // memcpy(plaintext_buffer, "Hello", 5);
-  // plaintext_buffer[5] = 0;
+  aes_decrypt(AES128_DEFAULT, ECB, ciphertext, &plaintext);
 }
