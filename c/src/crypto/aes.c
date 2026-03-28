@@ -1,8 +1,35 @@
 #include "../../include/crypto/aes.h"
 
+
+void load_state(const byte in[AES_BLOCK_SIZE], byte out[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
+  for(int b = 0; b < AES_BLOCK_SIZE; b++) {
+    out[b % AES_STATE_ROW_SIZE][b / AES_STATE_COLUMN_SIZE] = in[b];
+  }
+}
+
+
+void store_state(const byte in[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte out[AES_BLOCK_SIZE]) {
+  for(int b = 0; b < AES_BLOCK_SIZE; b++) {
+    out[b] = in[b % AES_STATE_ROW_SIZE][b / AES_STATE_COLUMN_SIZE];
+  }
+}
+
+
+void debug_aes_state(const char * prefix, byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
+  printf("\n%s", prefix);
+  for(int col=0; col < AES_STATE_COLUMN_SIZE; col++) {
+    printf("\n\t");
+    for(int row=0; row < AES_STATE_ROW_SIZE; row++) {
+      printf("0x%2x ", state[col][row]);
+    }
+  }
+  printf("\n");
+}
+
+
 // === AES Algorithm
 
-const byte SBOX[256] = {
+const byte FORWARD_SBOX[256] = {
   //0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
   0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
   0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -41,46 +68,59 @@ const byte INVERSE_SBOX[256] =  {
   0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d 
 };
 
-
-const byte COLUMN_MATRIX[2][AES_BLOCK_SIZE] = {
-  { 0x2, 0x3, 0x1, 0x1, 0x1, 0x2, 0x3, 0x1, 0x1, 0x1, 0x2, 0x3, 0x3, 0x1, 0x1, 0x2 },
-  { 0xe, 0xb, 0xd, 0x9, 0x9, 0xe, 0xb, 0xd, 0xd, 0x9, 0xe, 0xb, 0xb, 0xd, 0x9, 0xe }
+const byte PRESET_MATRIX[2][AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE] = {
+  {
+    { 0x2, 0x3, 0x1, 0x1 },
+    { 0x1, 0x2, 0x3, 0x1 },
+    { 0x1, 0x1, 0x2, 0x3 },
+    { 0x3, 0x1, 0x1, 0x2 }
+  },
+  { 
+    { 0xe, 0xb, 0xd, 0x9 }, 
+    { 0x9, 0xe, 0xb, 0xd },
+    { 0xd, 0x9, 0xe, 0xb },
+    { 0xb, 0xd, 0x9, 0xe }
+  }
 };
 
-
-byte aes_sub_bytes(aes_dir_t dir, byte c) {
-  if(dir == FORWARD) return SBOX[c];
-    
-  return INVERSE_SBOX[c];
-}
+const byte ROUND_CONSTANTS[11] = { 0x0, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
 
 
-void aes_shift_rows(aes_dir_t dir, byte state[AES_BLOCK_SIZE]) {
-  byte new_row[AES_STATE_ROW_SIZE];
-  uint8_t row_index;
-
-  for(int r=1; r < AES_STATE_ROW_SIZE; r++) { // Operate only over rows {1, 2, 3} - ignore row 0
-    row_index = r * AES_STATE_ROW_SIZE;
-
-    if(dir == FORWARD) {
-      // Shift r steps left
-      for(int c=0; c < AES_STATE_COLUMN_SIZE; c++) {
-        new_row[c] = state[row_index + ((c + r) % AES_STATE_COLUMN_SIZE)];
-      }
+void aes_sub_bytes(aes_dir_t dir, byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
+  const byte * box;
+  
+  if(dir == FORWARD) box = FORWARD_SBOX;
+  else box = INVERSE_SBOX;
+  
+  for(int col=0; col < AES_STATE_COLUMN_SIZE; col++) {
+    for(int row=0; row < AES_STATE_ROW_SIZE; row++) {
+      state[col][row] = box[state[col][row]];
     }
-    else {
-      // Shift r steps right
-      for(int c=0; c < AES_STATE_COLUMN_SIZE; c++) {
-        new_row[(c + r) % AES_STATE_COLUMN_SIZE] = state[row_index + c];
-      }
-    }
-    
-    memcpy(state + row_index, new_row, AES_STATE_ROW_SIZE);
   }
 }
 
 
-static inline byte multiplication_gf8(byte a, byte b) {
+void aes_shift_rows(aes_dir_t dir, byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
+  const byte forward_map[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE] = {
+    { state[0][0], state[0][1], state[0][2], state[0][3] },
+    { state[1][1], state[1][2], state[1][3], state[1][0] },
+    { state[2][2], state[2][3], state[2][0], state[2][1] },
+    { state[3][3], state[3][0], state[3][1], state[3][2] }
+  };
+
+  const byte inverse_map[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE] = {
+    { state[0][0], state[0][1], state[0][2], state[0][3] },
+    { state[1][3], state[1][0], state[1][1], state[1][2] },
+    { state[2][2], state[2][3], state[2][0], state[2][1] },
+    { state[3][1], state[3][2], state[3][3], state[3][0] }
+  };
+
+  if(dir == FORWARD)  memcpy(state, forward_map, AES_BLOCK_SIZE);
+  else memcpy(state, inverse_map, AES_BLOCK_SIZE);
+}
+
+
+static inline byte mult_gf8(byte a, byte b) {
   byte result = 0x0;
   byte hi_bit;
 
@@ -90,7 +130,7 @@ static inline byte multiplication_gf8(byte a, byte b) {
     hi_bit = a & 0x80;
     a <<= 1;
 
-    if(hi_bit) a ^= 0x1b; // x^8 + x^4 + x^3 + x + 1 (AES irreducible plynomial)
+    if(hi_bit) a ^= 0x1b; // x^8 + x^4 + x^3 + x + 1 (AES irreducible polynomial)
 
     b >>= 1;
   }
@@ -99,77 +139,164 @@ static inline byte multiplication_gf8(byte a, byte b) {
 }
 
 
-void aes_mix_columns(aes_dir_t dir, byte state[AES_BLOCK_SIZE]) {
-  byte state_column[AES_STATE_COLUMN_SIZE];
-  byte accumulator, matrix_elem;
+static inline void mix_columm_matrix_multiply(aes_dir_t dir, byte * s[AES_STATE_COLUMN_SIZE]) {
+  byte temp[AES_STATE_COLUMN_SIZE];
 
-  const byte map[AES_STATE_ROW_SIZE][AES_STATE_COLUMN_SIZE] = {
-    {0, 4, 8, 12},
-    {1, 5, 9, 13},
-    {2, 6, 10, 14},
-    {3, 7, 11, 15}
-  };
+  for(int i=0; i < AES_STATE_COLUMN_SIZE; i++) {
+    temp[i] = 0x0;
+    for(int j=0; j < AES_STATE_ROW_SIZE; j++) {
+      temp[i] = add_gf8(temp[i], mult_gf8(PRESET_MATRIX[dir][i][j], *s[j]));
+    } 
+  }
+
+  *s[0] = temp[0];
+  *s[1] = temp[1];
+  *s[2] = temp[2];
+  *s[3] = temp[3];
+}
+
+
+void aes_mix_columns(aes_dir_t dir, byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
+  byte * state_column[AES_STATE_COLUMN_SIZE];
 
   for(int column=0; column < AES_STATE_COLUMN_SIZE; column++) {
-    // Map row-major state block to state column
-    for(int i=0; i < AES_STATE_COLUMN_SIZE; i++) state_column[i] = state[map[column][i]];
-    
+    state_column[0] = &state[0][column];
+    state_column[1] = &state[1][column];
+    state_column[2] = &state[2][column];
+    state_column[3] = &state[3][column];
+
     // Column transformation
-    matrix_elem = 0;
-    for(int i=0; i < AES_STATE_ROW_SIZE; i++) {
-      accumulator = 0x0;
-      for(int operand=0; operand < AES_STATE_COLUMN_SIZE; operand++) {
-        accumulator = addition_gf8(accumulator, multiplication_gf8(COLUMN_MATRIX[dir][matrix_elem], state[map[column][operand]]));
-        matrix_elem++;
-      }
-      state_column[i] = accumulator;
+    mix_columm_matrix_multiply(dir, state_column);
+  }
+}
+
+
+void aes_add_round_key(byte round_key[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
+  for(int col=0; col < AES_STATE_COLUMN_SIZE; col++) {
+    for(int row=0; row < AES_STATE_ROW_SIZE; row++) {
+      state[col][row] ^= round_key[col][row];
     }
-    
-    // Inverse map from column to row-major state
-    for(int i=0; i < AES_STATE_ROW_SIZE; i++) state[map[column][i]] = state_column[i];
   }
 }
 
 
-void aes_add_round_key() {
-
+static inline void g(byte word[AES_WORD_SIZE], const uint8_t round) {
+  // RotWord + SubWord + Rcon
+  byte temp128 = word[0];
+  word[0] = FORWARD_SBOX[word[1]] ^ ROUND_CONSTANTS[round];
+  word[1] = FORWARD_SBOX[word[2]];
+  word[2] = FORWARD_SBOX[word[3]];
+  word[3] = FORWARD_SBOX[temp128];
 }
 
 
-void aes_key_expansion() {
+void aes_key_expansion(const uint16_t key_len, byte round_key[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], const uint8_t round) {
+  byte temp_w128[AES_WORD_SIZE];
 
+  switch(key_len) {
+    case 256: // WIP
+    case 192: // WIP
+    default: 
+      // w4 = g(w3) + w0
+      // w5 = g(w3) + w0 + w1
+      // w6 = g(w3) + w0 + w1 + w2
+      // w7 = g(w3) + w0 + w1 + w2 + w3
+
+      temp_w128[0] = round_key[0][3];
+      temp_w128[1] = round_key[1][3];
+      temp_w128[2] = round_key[2][3];
+      temp_w128[3] = round_key[3][3];
+
+      g(temp_w128, round);
+
+      round_key[0][0] ^= temp_w128[0];
+      round_key[1][0] ^= temp_w128[1];
+      round_key[2][0] ^= temp_w128[2];
+      round_key[3][0] ^= temp_w128[3];
+
+      for(int w=1; w < AES_STATE_COLUMN_SIZE; w++) {
+        round_key[0][w] ^= round_key[0][w-1];
+        round_key[1][w] ^= round_key[1][w-1];
+        round_key[2][w] ^= round_key[2][w-1];
+        round_key[3][w] ^= round_key[3][w-1];
+      }
+      break;
+  }
 }
 
 
-void aes_inverse_cipher_block(const uint8_t rounds, const byte cipher_block[AES_BLOCK_SIZE], const byte round_key[AES_BLOCK_SIZE], byte plaintext_block[AES_BLOCK_SIZE]) {
-  byte state[AES_BLOCK_SIZE];
-  memcpy(state, cipher_block, AES_BLOCK_SIZE);
+void aes_inverse_cipher_block(const aes_ctx_t ctx, const byte cipher[AES_BLOCK_SIZE], byte input[AES_BLOCK_SIZE]) {
+  uint8_t round = ctx.rounds;
+  byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE];
+  byte round_key[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE];
+  byte precomputed_round_keys[AES_MAX_ROUNDS + 1][AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE];
+  
+  load_state(cipher, state);
+  load_state(ctx.key, round_key);
+  memcpy(precomputed_round_keys[0], round_key, AES_BLOCK_SIZE);
 
-  for(uint8_t round = 0; round < rounds; round++) {
-    // Substituion
-    for(int i=0; i<AES_BLOCK_SIZE; i++) state[i] = aes_sub_bytes(INVERSE, state[i]);
-    // Row shift
-    // Column mix
-    // Add round key
+  // Precompute round keys
+  for(int r=1; r <= AES_MAX_ROUNDS; r++) {
+    if(r <= ctx.rounds) {
+      aes_key_expansion(ctx.key_len, round_key, r);
+      memcpy(precomputed_round_keys[r], round_key, AES_BLOCK_SIZE);
+    }
+    else memset(precomputed_round_keys[r], 0x0, AES_BLOCK_SIZE);
   }
 
-  memcpy(plaintext_block, state, AES_BLOCK_SIZE);
+  // Initial transformation
+  aes_add_round_key(precomputed_round_keys[round], state);
+
+  // Rounds
+  while(--round > 0) {
+    aes_shift_rows(INVERSE, state);
+    aes_sub_bytes(INVERSE, state);
+    aes_add_round_key(precomputed_round_keys[round], state);
+    aes_mix_columns(INVERSE, state);
+  };
+
+  // Last round
+  aes_shift_rows(INVERSE, state);
+  aes_sub_bytes(INVERSE, state);
+  aes_add_round_key(precomputed_round_keys[0], state);
+
+  store_state(state, input);
 }
 
 
-void aes_cipher_block(const uint8_t rounds, const byte plaintext_block[AES_BLOCK_SIZE], const byte round_key[AES_BLOCK_SIZE], byte cipher_block[AES_BLOCK_SIZE]) {
-  for(uint8_t round = 0; round < rounds; round++) {
-    // Substituion
-    // Row shift
-    // Column mix
-    // Add round key
-  }
+void aes_cipher_block(const aes_ctx_t ctx, const byte input[AES_BLOCK_SIZE], byte cipher[AES_BLOCK_SIZE]) {
+  uint8_t round = 1;
+  byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], round_key[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE];
+
+  load_state(input, state);
+  load_state(ctx.key, round_key);
+
+  // Initial transformation
+  aes_add_round_key(round_key, state);
+
+  // Rounds
+  do {
+    aes_sub_bytes(FORWARD, state);
+    aes_shift_rows(FORWARD, state);
+    aes_mix_columns(FORWARD, state);
+    aes_key_expansion(ctx.key_len, round_key, round);
+    aes_add_round_key(round_key, state);
+    round++;
+  } while(round < ctx.rounds);
+
+  // Last round
+  aes_sub_bytes(FORWARD, state);
+  aes_shift_rows(FORWARD, state);
+  aes_key_expansion(ctx.key_len, round_key, round);
+  aes_add_round_key(round_key, state);
+
+  store_state(state, cipher);
 }
 
 
 // === Encryption functions ===
 
-void aes_encrypt(aes_ctx_t config, aes_mode_t mode) {
+void aes_encrypt(aes_ctx_t config) {
   // WIP
 }
 
@@ -180,19 +307,18 @@ void ecb_encrypt() {
 
 // === Decryption functions ===
 
-void aes_decrypt(const aes_ctx_t ctx, const aes_mode_t mode, const ByteStream ciphertext, ByteStream * plaintext) {
-  void (* aes_decrypt_mode_fn)(const aes_ctx_t, const ByteStream, const ByteStream, ByteStream *);
-  ByteStream key;   // key expansion
+void aes_decrypt(const aes_ctx_t ctx, const ByteStream ciphertext, ByteStream * plaintext) {
+  void (* aes_decrypt_mode_fn)(const aes_ctx_t, const ByteStream, ByteStream *);
 
-  switch(mode) {
+  switch(ctx.mode) {
     case ECB: aes_decrypt_mode_fn = &ecb_decrypt; break;
   }
 
-  aes_decrypt_mode_fn(ctx, ciphertext, key, plaintext);
+  aes_decrypt_mode_fn(ctx, ciphertext, plaintext);
 }
 
 
-void ecb_decrypt(const aes_ctx_t ctx, const ByteStream ciphertext, const ByteStream key, ByteStream * plaintext) {
+void ecb_decrypt(const aes_ctx_t ctx, const ByteStream ciphertext, ByteStream * plaintext) {
   // Divide plaintext in N blocks
   // Iterate over the N blocks
   memcpy(plaintext->content, "Hella", 5);

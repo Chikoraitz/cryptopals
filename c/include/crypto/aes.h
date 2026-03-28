@@ -23,36 +23,47 @@ typedef enum {
 
 typedef struct {
   size_t key_len;
+  aes_mode_t mode;
   uint8_t rounds;
+  byte * key;
   byte iv[16];
 } aes_ctx_t;
 
-#define AES128_DEFAULT (aes_ctx_t){ .key_len = 16, .rounds = 10 }
-#define AES192_DEFAULT (aes_ctx_t){ .key_len = 24, .rounds = 12 }
-#define AES256_DEFAULT (aes_ctx_t){ .key_len = 32, .rounds = 14 }
+#define AES128_DEFAULT  (aes_ctx_t){ .key_len = 16, .rounds = 10 }
+#define AES192_DEFAULT  (aes_ctx_t){ .key_len = 24, .rounds = 12 }
+#define AES256_DEFAULT  (aes_ctx_t){ .key_len = 32, .rounds = 14 }
+#define AES_WORD_SIZE   4
+#define AES_MAX_ROUNDS  15
 
-void aes_encrypt(const aes_ctx_t, const aes_mode_t);
-void aes_decrypt(const aes_ctx_t, const aes_mode_t, const ByteStream, ByteStream *);
+void aes_encrypt(const aes_ctx_t);
+void aes_decrypt(const aes_ctx_t, const ByteStream, ByteStream *);
+
+void load_state(const byte[AES_BLOCK_SIZE], byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
+void store_state(const byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte[AES_BLOCK_SIZE]);
+void debug_aes_state(const char*, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
 
 // AES algorithm
-extern const byte SBOX[256];
+extern const byte FORWARD_SBOX[256];
 extern const byte INVERSE_SBOX[256];
-extern const byte COLUMN_MATRIX[2][AES_BLOCK_SIZE];
+extern const byte PRESET_MATRIX[2][AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE];
+extern const byte ROUND_CONSTANTS[11];
 
-static inline byte addition_gf8(byte b1, byte b2) { return b1 ^ b2; }
-static inline byte multiplication_gf8(byte, byte);
+static inline byte add_gf8(byte b1, byte b2) { return b1 ^ b2; }
+static inline byte mult_gf8(byte, byte);
+static inline void mix_columm_matrix_multiply(aes_dir_t, byte*[AES_STATE_COLUMN_SIZE]);
+static inline void g(byte[AES_WORD_SIZE], const uint8_t); // Transformation Chain: RotWord + SubWord + Rcon
 
-void aes_key_expansion();
-byte aes_sub_bytes(aes_dir_t, byte);
-void aes_shift_rows(aes_dir_t, byte[AES_BLOCK_SIZE]);
-void aes_mix_columns(aes_dir_t, byte[AES_BLOCK_SIZE]);
-void aes_add_round_key();
-void aes_inverse_cipher_block(const uint8_t, const byte[AES_BLOCK_SIZE], const byte[AES_BLOCK_SIZE], byte[AES_BLOCK_SIZE]);
-void aes_cipher_block(const uint8_t, const byte[AES_BLOCK_SIZE], const byte[AES_BLOCK_SIZE], byte[AES_BLOCK_SIZE]);
+void aes_cipher_block(const aes_ctx_t, const byte[AES_BLOCK_SIZE], byte[AES_BLOCK_SIZE]);
+void aes_inverse_cipher_block(const aes_ctx_t, const byte[AES_BLOCK_SIZE], byte[AES_BLOCK_SIZE]);
 
+void aes_sub_bytes(aes_dir_t, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
+void aes_shift_rows(aes_dir_t, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
+void aes_mix_columns(aes_dir_t, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
+void aes_add_round_key(byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
+void aes_key_expansion(const uint16_t, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], const uint8_t);
 
 // Encryption/Decryption Modes
 void ecb_encrypt();
-void ecb_decrypt(const aes_ctx_t, const ByteStream, const ByteStream, ByteStream *);
+void ecb_decrypt(const aes_ctx_t, const ByteStream, ByteStream *);
 
 #endif

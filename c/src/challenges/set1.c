@@ -188,9 +188,15 @@ void c6(const char * filepath, char * key_buffer) {
 
 
 void c7(const char * filepath, char * plaintext_buffer) {
+  enum { BUFFER_SIZE = 2500 };
+  
   char cipher_buffer[2000];
-  ByteStream ciphertext = BYTESTREAM(cipher_buffer, 2000);
-  ByteStream plaintext = BYTESTREAM(plaintext_buffer, 2000);
-
-  aes_decrypt(AES128_DEFAULT, ECB, ciphertext, &plaintext);
+  ByteStream ciphertext = BYTESTREAM(cipher_buffer, BUFFER_SIZE);
+  ByteStream plaintext = BYTESTREAM(plaintext_buffer, BUFFER_SIZE);
+  byte key[AES_BLOCK_SIZE] = "YELLOW SUBMARINE";
+  
+  aes_ctx_t aes_ctx = AES128_DEFAULT;
+  aes_ctx.mode = ECB;
+  aes_ctx.key = key;
+  aes_decrypt(aes_ctx, ciphertext, &plaintext);
 }
