@@ -8,8 +8,8 @@
 #include "../../include/utils/debug.h"
 #include "../../include/crypto/xor.h"
 
-#define AES_BLOCK_SIZE 16
-#define AES_STATE_ROW_SIZE 4
+#define AES_BLOCK_SIZE        16
+#define AES_STATE_ROW_SIZE    4
 #define AES_STATE_COLUMN_SIZE 4
 
 typedef enum { 
@@ -22,12 +22,18 @@ typedef enum {
 } aes_mode_t;
 
 typedef struct {
-  size_t key_len;
-  aes_mode_t mode;
-  uint8_t rounds;
-  byte * key;
-  byte iv[16];
+  size_t      key_len;
+  aes_mode_t  mode;
+  uint8_t     rounds;
+  byte *      key;
+  byte        iv[16];
 } aes_ctx_t;
+
+typedef enum {
+  AES_OK =         0,
+  AES_EINVAL =    -1,
+  AES_EKEYLEN =   -2
+} aes_status_code_t;
 
 #define AES128_DEFAULT  (aes_ctx_t){ .key_len = 16, .rounds = 10 }
 #define AES192_DEFAULT  (aes_ctx_t){ .key_len = 24, .rounds = 12 }
@@ -35,12 +41,24 @@ typedef struct {
 #define AES_WORD_SIZE   4
 #define AES_MAX_ROUNDS  15
 
-void aes_encrypt(const aes_ctx_t);
-void aes_decrypt(const aes_ctx_t, const ByteStream, ByteStream *);
+// Public AES APIs
+aes_status_code_t aes_encrypt(const aes_ctx_t);
+aes_status_code_t aes_decrypt(const aes_ctx_t, const ByteStream, ByteStream *);
 
-void load_state(const byte[AES_BLOCK_SIZE], byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
-void store_state(const byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte[AES_BLOCK_SIZE]);
+aes_status_code_t load_state(const byte[AES_BLOCK_SIZE], byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
+aes_status_code_t store_state(const byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte[AES_BLOCK_SIZE]);
+
+const char * aes_strerror(aes_status_code_t code);
 void debug_aes_state(const char*, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
+
+
+// PKCS#7 Padding
+aes_status_code_t pkcs7_pad(const ByteStream, ByteStream*);
+
+// Encryption/Decryption Modes
+aes_status_code_t ecb_encrypt(const aes_ctx_t, const ByteStream, ByteStream *);
+aes_status_code_t ecb_decrypt(const aes_ctx_t, const ByteStream, ByteStream *);
+
 
 // AES algorithm
 extern const byte FORWARD_SBOX[256];
@@ -62,8 +80,5 @@ void aes_mix_columns(aes_dir_t, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE])
 void aes_add_round_key(byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]);
 void aes_key_expansion(const uint16_t, byte[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], const uint8_t);
 
-// Encryption/Decryption Modes
-void ecb_encrypt();
-void ecb_decrypt(const aes_ctx_t, const ByteStream, ByteStream *);
 
 #endif

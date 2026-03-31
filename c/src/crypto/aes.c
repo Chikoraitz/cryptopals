@@ -1,18 +1,50 @@
 #include "../../include/crypto/aes.h"
 
 
-void load_state(const byte in[AES_BLOCK_SIZE], byte out[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
+// === Public AES APIs
+
+aes_status_code_t load_state(const byte in[AES_BLOCK_SIZE], byte out[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
   for(int b = 0; b < AES_BLOCK_SIZE; b++) {
     out[b % AES_STATE_ROW_SIZE][b / AES_STATE_COLUMN_SIZE] = in[b];
   }
+
+  return AES_OK;
 }
 
 
-void store_state(const byte in[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte out[AES_BLOCK_SIZE]) {
+aes_status_code_t store_state(const byte in[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE], byte out[AES_BLOCK_SIZE]) {
   for(int b = 0; b < AES_BLOCK_SIZE; b++) {
     out[b] = in[b % AES_STATE_ROW_SIZE][b / AES_STATE_COLUMN_SIZE];
   }
+
+  return AES_OK;
 }
+
+
+const char * aes_strerror(aes_status_code_t code) {
+  const static char * status_msg[3] = {
+    "success", "invalid argument", "unsupported key length"
+  };
+
+  return status_msg[-code];
+}
+
+
+aes_status_code_t aes_encrypt(aes_ctx_t config) {
+  // WIP
+}
+
+
+aes_status_code_t aes_decrypt(const aes_ctx_t ctx, const ByteStream ciphertext, ByteStream * plaintext) {
+  aes_status_code_t (* aes_decrypt_mode_fn)(const aes_ctx_t, const ByteStream, ByteStream *);
+
+  switch(ctx.mode) {
+    case ECB: aes_decrypt_mode_fn = &ecb_decrypt; break;
+  }
+
+  return aes_decrypt_mode_fn(ctx, ciphertext, plaintext);
+}
+
 
 
 void debug_aes_state(const char * prefix, byte state[AES_STATE_COLUMN_SIZE][AES_STATE_ROW_SIZE]) {
@@ -24,6 +56,41 @@ void debug_aes_state(const char * prefix, byte state[AES_STATE_COLUMN_SIZE][AES_
     }
   }
   printf("\n");
+}
+
+
+// === AES modes of operations
+
+aes_status_code_t pkcs7_pad(const ByteStream in, ByteStream * out) {
+  return AES_OK;
+}
+
+
+aes_status_code_t ecb_encrypt(const aes_ctx_t, const ByteStream plaintext, ByteStream * cipher) {
+  // WIP
+  return AES_OK;
+}
+
+
+aes_status_code_t ecb_decrypt(const aes_ctx_t ctx, const ByteStream cipher, ByteStream * plaintext) {
+  byte cipher_block[AES_BLOCK_SIZE];
+
+  // Error handling
+  if(cipher.size != plaintext->size) return AES_EINVAL;
+  
+  if((cipher.size % AES_BLOCK_SIZE) != 0) {
+    // Perform padding
+    return AES_EKEYLEN;
+  }
+
+  for(int offset=0; offset < cipher.size; offset += AES_BLOCK_SIZE) {
+    memcpy(cipher_block, cipher.content + offset, AES_BLOCK_SIZE);
+    aes_inverse_cipher_block(ctx, cipher.content + offset, plaintext->content + offset);
+  }
+
+  plaintext->content[plaintext->size] = 0;
+
+  return AES_OK;
 }
 
 
@@ -291,36 +358,4 @@ void aes_cipher_block(const aes_ctx_t ctx, const byte input[AES_BLOCK_SIZE], byt
   aes_add_round_key(round_key, state);
 
   store_state(state, cipher);
-}
-
-
-// === Encryption functions ===
-
-void aes_encrypt(aes_ctx_t config) {
-  // WIP
-}
-
-void ecb_encrypt() {
-  // WIP
-}
-
-
-// === Decryption functions ===
-
-void aes_decrypt(const aes_ctx_t ctx, const ByteStream ciphertext, ByteStream * plaintext) {
-  void (* aes_decrypt_mode_fn)(const aes_ctx_t, const ByteStream, ByteStream *);
-
-  switch(ctx.mode) {
-    case ECB: aes_decrypt_mode_fn = &ecb_decrypt; break;
-  }
-
-  aes_decrypt_mode_fn(ctx, ciphertext, plaintext);
-}
-
-
-void ecb_decrypt(const aes_ctx_t ctx, const ByteStream ciphertext, ByteStream * plaintext) {
-  // Divide plaintext in N blocks
-  // Iterate over the N blocks
-  memcpy(plaintext->content, "Hella", 5);
-  plaintext->content[5] = 0;
 }
