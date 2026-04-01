@@ -6,6 +6,7 @@
 #include "../../include/crypto/xor.h"
 #include "../../include/analysis/en_score.h"
 #include "../../include/crypto/aes.h"
+#include "../../include/analysis/aes.h"
 
 #define FILE_LINE_B64_BUFFER_SIZE 62
 
@@ -17,6 +18,7 @@ void c4(const char *, char *);
 void c5(const char *, const char *, char *);
 void c6(const char *, char *);
 aes_status_code_t c7(const char *, char *, byte[AES_BLOCK_SIZE]);
+void c8(const char *, char *);
 
 void get_cipher_from_b64_str(const char *, ByteStream *);
 

@@ -181,6 +181,29 @@ aes_status_code_t c7(const char * filename, char * plaintext_buffer, byte key[AE
 }
 
 
+void c8(const char * filename, char * ecb) {
+  enum { HEX_STR_BUFFER = 322, BINARY_BUFFER = 160 };
+  
+  FILE * fp;
+  char fstr[HEX_STR_BUFFER] = {0x0};
+  byte hexstr_buffer[BINARY_BUFFER];
+  ByteStream cipher = BYTESTREAM(hexstr_buffer, BINARY_BUFFER);
+
+  // Open file
+  if((fp = fopen(filename, "r")) == NULL) {
+    printf("Can't open file: %s\n", filename);
+  }
+  else {
+    while(fgets(fstr, HEX_STR_BUFFER, fp) != NULL) {
+      fstr[strcspn(fstr, "\n")] = 0; // Remove newlines
+      hexstr_to_bytes(fstr, &cipher);
+      if(is_ecb_cipher(cipher)) strcpy(ecb, fstr);
+    }
+  }
+  fclose(fp);
+}
+
+
 void get_cipher_from_b64_str(const char * filename, ByteStream * cipher) {
   FILE * fp;
   char fstr[FILE_LINE_B64_BUFFER_SIZE] = "";

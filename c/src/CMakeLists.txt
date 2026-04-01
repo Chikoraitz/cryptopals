@@ -6,8 +6,10 @@ list(APPEND HEADER_FILES
       "${CMAKE_SOURCE_DIR}/include/utils/debug.h"
       "${CMAKE_SOURCE_DIR}/include/crypto/aes.h"
       "${CMAKE_SOURCE_DIR}/include/crypto/xor.h"
+      "${CMAKE_SOURCE_DIR}/include/crypto/hash.h"
       "${CMAKE_SOURCE_DIR}/include/analysis/en_score.h"
-      "${CMAKE_SOURCE_DIR}/include/analysis/hamming.h")
+      "${CMAKE_SOURCE_DIR}/include/analysis/hamming.h"
+      "${CMAKE_SOURCE_DIR}/include/analysis/aes.h")
 
 list(APPEND SRC_FILES 
       "${CMAKE_CURRENT_SOURCE_DIR}/utils/base64.c"
@@ -15,8 +17,10 @@ list(APPEND SRC_FILES
       "${CMAKE_CURRENT_SOURCE_DIR}/utils/debug.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/crypto/aes.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/crypto/xor.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/crypto/hash.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/analysis/en_score.c"
-      "${CMAKE_CURRENT_SOURCE_DIR}/analysis/hamming.c")
+      "${CMAKE_CURRENT_SOURCE_DIR}/analysis/hamming.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/analysis/aes.c")
 
 
 #[[ Challenges ]]
